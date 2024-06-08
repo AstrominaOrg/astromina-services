@@ -2,6 +2,11 @@ const {
   handleIssueCreate,
   handleAssigneeUpdate,
   handleIssueClose,
+  handleIssueDelete,
+  handleIssueEdit,
+  handleIssueReopen,
+  handleIssueTransfer,
+  handleIssueLabel,
   checkOrganizationAndRepository,
   handlePriceCommand,
 } = require('./services/gitbot.service');
@@ -20,33 +25,45 @@ module.exports = (app) => {
     }
   });
 
-  app.on('issues.assigned', async (context) => {
-    if (await checkOrganizationAndRepository(context)) {
-      handleAssigneeUpdate(context);
-    }
-  });
-
-  // app.on('issues.opened', async () => {});
-  // app.on('issues.closed', async () => {});
-  // app.on('issues.deleted', async () => {});
-  // app.on('issues.edited', async () => {});
-  // app.on('issues.reopened', async () => {});
-  // app.on('issues.transferred', async () => {});
-  // app.on('issues.labeled', async () => {});
-  // app.on('issues.unlabeled', async () => {});
-  // app.on('issues.milestoned', async () => {});
-  // app.on('issues.demilestoned', async () => {});
-  // app.on('issues.locked', async () => {});
-  // app.on('issues.unlocked', async () => {});
-  // app.on('issues.pinned', async () => {});
-  // app.on('issues.unpinned', async () => {});
-  // app.on('issues.unassigned', async () => {});
-  // app.on('issues.assigned', async () => {});
-  // app.on('issues.transferred', async () => {});
-
   app.on('issues.closed', async (context) => {
     if (await checkOrganizationAndRepository(context)) {
       handleIssueClose(context);
+    }
+  });
+
+  app.on('issues.deleted', async (context) => {
+    if (await checkOrganizationAndRepository(context)) {
+      handleIssueDelete(context);
+    }
+  });
+
+  app.on('issues.edited', async (context) => {
+    if (await checkOrganizationAndRepository(context)) {
+      handleIssueEdit(context);
+    }
+  });
+
+  app.on('issues.reopened', async (context) => {
+    if (await checkOrganizationAndRepository(context)) {
+      handleIssueReopen(context);
+    }
+  });
+
+  app.on('issues.transferred', async (context) => {
+    if (await checkOrganizationAndRepository(context)) {
+      handleIssueTransfer(context);
+    }
+  });
+
+  app.on(['issues.labeled', 'issues.unlabeled'], async (context) => {
+    if (await checkOrganizationAndRepository(context)) {
+      handleIssueLabel(context);
+    }
+  });
+
+  app.on(['issues.assigned', 'issues.unassigned'], async (context) => {
+    if (await checkOrganizationAndRepository(context)) {
+      handleAssigneeUpdate(context);
     }
   });
 

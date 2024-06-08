@@ -8,15 +8,25 @@ async function sendComment(context, message) {
 }
 
 async function handleIssueCreate(context) {
-  const { issue } = context.payload;
+  const { issue, repository } = context.payload;
   const issueId = issue.id;
 
   await createOrUpdateIssue({
     issueId,
     title: issue.title,
     description: issue.body,
-    assignee: issue.assignee ? issue.assignee.login : null,
+    assignees: issue.assignees.map((assignee) => assignee.login),
+    repository: {
+      repositoryId: repository.id,
+      name: repository.name,
+      full_name: repository.full_name,
+      owner: repository.owner.login,
+      type: repository.owner.type,
+      description: repository.description,
+      avatar_url: repository.owner.avatar_url,
+    },
     creator: context.payload.sender.login,
+    labels: issue.labels.map((label) => label.name),
     state: issue.state,
   });
 }
@@ -29,7 +39,8 @@ async function handleAssigneeUpdate(context) {
     issueId,
     title: issue.title,
     description: issue.body,
-    assignee: issue.assignee ? issue.assignee.login : null,
+    assignees: issue.assignees.map((assignee) => assignee.login),
+    labels: issue.labels.map((label) => label.name),
     state: issue.state,
   });
 }
@@ -42,7 +53,87 @@ async function handleIssueClose(context) {
     issueId,
     title: issue.title,
     description: issue.body,
-    assignee: issue.assignee ? issue.assignee.login : null,
+    assignees: issue.assignees.map((assignee) => assignee.login),
+    labels: issue.labels.map((label) => label.name),
+    state: issue.state,
+  });
+}
+
+async function handleIssueLabel(context) {
+  const { issue } = context.payload;
+  const issueId = issue.id;
+
+  await createOrUpdateIssue({
+    issueId,
+    title: issue.title,
+    description: issue.body,
+    assignees: issue.assignees.map((assignee) => assignee.login),
+    labels: issue.labels.map((label) => label.name),
+    state: issue.state,
+  });
+}
+
+async function handleIssueTransfer(context) {
+  const { issue, repository } = context.payload;
+  const issueId = issue.id;
+  // TODO: the issue should be removed from the old repository.
+  await createOrUpdateIssue({
+    issueId,
+    title: issue.title,
+    description: issue.body,
+    assignees: issue.assignees.map((assignee) => assignee.login),
+    repository: {
+      repositoryId: repository.id,
+      name: repository.name,
+      full_name: repository.full_name,
+      owner: repository.owner.login,
+      type: repository.owner.type,
+      description: repository.description,
+      avatar_url: repository.owner.avatar_url,
+    },
+    labels: issue.labels.map((label) => label.name),
+    state: issue.state,
+  });
+}
+
+async function handleIssueReopen(context) {
+  const { issue } = context.payload;
+  const issueId = issue.id;
+
+  await createOrUpdateIssue({
+    issueId,
+    title: issue.title,
+    description: issue.body,
+    assignees: issue.assignees.map((assignee) => assignee.login),
+    labels: issue.labels.map((label) => label.name),
+    state: issue.state,
+  });
+}
+
+async function handleIssueEdit(context) {
+  const { issue } = context.payload;
+  const issueId = issue.id;
+
+  await createOrUpdateIssue({
+    issueId,
+    title: issue.title,
+    description: issue.body,
+    assignees: issue.assignees.map((assignee) => assignee.login),
+    labels: issue.labels.map((label) => label.name),
+    state: issue.state,
+  });
+}
+
+async function handleIssueDelete(context) {
+  const { issue } = context.payload;
+  const issueId = issue.id;
+
+  await createOrUpdateIssue({
+    issueId,
+    title: issue.title,
+    description: issue.body,
+    assignees: issue.assignees.map((assignee) => assignee.login),
+    labels: issue.labels.map((label) => label.name),
     state: issue.state,
   });
 }
@@ -92,6 +183,11 @@ async function handlePriceCommand(context) {
 module.exports = {
   handleIssueClose,
   handleIssueCreate,
+  handleIssueDelete,
+  handleIssueEdit,
+  handleIssueLabel,
+  handleIssueTransfer,
+  handleIssueReopen,
   handlePriceCommand,
   handleAssigneeUpdate,
   checkOrganizationAndRepository,

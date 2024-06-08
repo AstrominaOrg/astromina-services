@@ -34,7 +34,6 @@ const repositorySchema = new mongoose.Schema(
     state: {
       type: String,
       enum: ['pending', 'accepted', 'rejected'],
-      required: true,
     },
   },
   {
