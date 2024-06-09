@@ -65,4 +65,9 @@ module.exports = {
   discord: {
     token: envVars.DISCORD_TOKEN,
   },
+  github: {
+    clientId: envVars.GITHUB_CLIENT_ID,
+    clientSecret: envVars.GITHUB_CLIENT_SECRET,
+    callbackUrl: envVars.GITHUB_CALLBACK_URL,
+  },
 };
