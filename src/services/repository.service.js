@@ -47,8 +47,8 @@ async function getRepositoryByRepoId(repositoryId) {
  * @param {Object} updateBody
  * @returns {Promise<Repository>}
  */
-const updateRepositoryById = async (repositoryId, updateBody) => {
-  const repository = await getRepositoryById(repositoryId);
+const updateRepositoryByRepoId = async (repositoryId, updateBody) => {
+  const repository = await getRepositoryByRepoId(repositoryId);
   if (!repository) {
     throw new ApiError(httpStatus.NOT_FOUND, 'Repository not found');
   }
@@ -71,11 +71,24 @@ const deleteRepositoryById = async (repositoryId) => {
   return repository;
 };
 
+/**
+ * Create or update a repository
+ * @param {Object} repositoryBody
+ * @returns {Promise<Repository>}
+ */
+const createOrUpdateRepository = async (repositoryBody) => {
+  if (await getRepositoryByRepoId(repositoryBody.repositoryId)) {
+    return updateRepositoryByRepoId(repositoryBody.repositoryId, repositoryBody);
+  }
+  return createRepository(repositoryBody);
+};
+
 module.exports = {
   createRepository,
   queryRepositories,
   getRepositoryById,
   getRepositoryByRepoId,
-  updateRepositoryById,
+  createOrUpdateRepository,
+  updateRepositoryByRepoId,
   deleteRepositoryById,
 };

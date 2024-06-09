@@ -27,13 +27,16 @@ const repositorySchema = new mongoose.Schema(
     },
     description: {
       type: String,
+      default: '',
     },
     avatar_url: {
       type: String,
     },
     state: {
       type: String,
-      enum: ['pending', 'accepted', 'rejected'],
+      enum: ['pending', 'accepted', 'rejected', 'deleted'],
+      required: true,
+      default: 'pending',
     },
   },
   {

@@ -44,6 +44,7 @@ const issueSchema = new mongoose.Schema(
 );
 
 issueSchema.plugin(toJSON);
+issueSchema.index({ issueId: 1 }, { unique: true });
 
 /**
  * @typedef Issue

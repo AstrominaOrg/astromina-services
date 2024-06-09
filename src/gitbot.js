@@ -7,8 +7,10 @@ const {
   handleIssueReopen,
   handleIssueTransfer,
   handleIssueLabel,
+  handleRepositoryAdd,
   checkOrganizationAndRepository,
   handlePriceCommand,
+  handleRepositoryRemove,
 } = require('./services/gitbot.service');
 
 /**
@@ -70,6 +72,18 @@ module.exports = (app) => {
   app.on('issue_comment.created', async (context) => {
     if (await checkOrganizationAndRepository(context)) {
       handlePriceCommand(context);
+    }
+  });
+
+  app.on('installation_repositories.added', async (context) => {
+    if (await checkOrganizationAndRepository(context, 'installation')) {
+      handleRepositoryAdd(context);
+    }
+  });
+
+  app.on('installation_repositories.removed', async (context) => {
+    if (await checkOrganizationAndRepository(context, 'installation')) {
+      handleRepositoryRemove(context);
     }
   });
 };

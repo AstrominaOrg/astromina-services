@@ -1,6 +1,6 @@
-const { createOrUpdateIssue, getIssueByIssueId, updateIssueByIssueId } = require('./issue.service');
+const { createOrUpdateIssue, getIssueByIssueId, updateIssueByIssueId, deleteIssueByIssueId } = require('./issue.service');
 const { getOrganizationByOrgId } = require('./organization.service');
-const { getRepositoryByRepoId } = require('./repository.service');
+const { getRepositoryByRepoId, createOrUpdateRepository } = require('./repository.service');
 
 async function sendComment(context, message) {
   const params = context.issue({ body: message });
@@ -9,6 +9,7 @@ async function sendComment(context, message) {
 
 async function handleIssueCreate(context) {
   const { issue, repository } = context.payload;
+  const repo = await getRepositoryByRepoId(repository.id);
   const issueId = issue.id;
 
   await createOrUpdateIssue({
@@ -16,15 +17,7 @@ async function handleIssueCreate(context) {
     title: issue.title,
     description: issue.body,
     assignees: issue.assignees.map((assignee) => assignee.login),
-    repository: {
-      repositoryId: repository.id,
-      name: repository.name,
-      full_name: repository.full_name,
-      owner: repository.owner.login,
-      type: repository.owner.type,
-      description: repository.description,
-      avatar_url: repository.owner.avatar_url,
-    },
+    repository: repo,
     creator: context.payload.sender.login,
     labels: issue.labels.map((label) => label.name),
     state: issue.state,
@@ -37,11 +30,7 @@ async function handleAssigneeUpdate(context) {
 
   await createOrUpdateIssue({
     issueId,
-    title: issue.title,
-    description: issue.body,
     assignees: issue.assignees.map((assignee) => assignee.login),
-    labels: issue.labels.map((label) => label.name),
-    state: issue.state,
   });
 }
 
@@ -51,10 +40,6 @@ async function handleIssueClose(context) {
 
   await createOrUpdateIssue({
     issueId,
-    title: issue.title,
-    description: issue.body,
-    assignees: issue.assignees.map((assignee) => assignee.login),
-    labels: issue.labels.map((label) => label.name),
     state: issue.state,
   });
 }
@@ -65,35 +50,15 @@ async function handleIssueLabel(context) {
 
   await createOrUpdateIssue({
     issueId,
-    title: issue.title,
-    description: issue.body,
-    assignees: issue.assignees.map((assignee) => assignee.login),
     labels: issue.labels.map((label) => label.name),
-    state: issue.state,
   });
 }
 
 async function handleIssueTransfer(context) {
-  const { issue, repository } = context.payload;
+  const { issue } = context.payload;
   const issueId = issue.id;
-  // TODO: the issue should be removed from the old repository.
-  await createOrUpdateIssue({
-    issueId,
-    title: issue.title,
-    description: issue.body,
-    assignees: issue.assignees.map((assignee) => assignee.login),
-    repository: {
-      repositoryId: repository.id,
-      name: repository.name,
-      full_name: repository.full_name,
-      owner: repository.owner.login,
-      type: repository.owner.type,
-      description: repository.description,
-      avatar_url: repository.owner.avatar_url,
-    },
-    labels: issue.labels.map((label) => label.name),
-    state: issue.state,
-  });
+
+  await deleteIssueByIssueId(issueId);
 }
 
 async function handleIssueReopen(context) {
@@ -102,10 +67,6 @@ async function handleIssueReopen(context) {
 
   await createOrUpdateIssue({
     issueId,
-    title: issue.title,
-    description: issue.body,
-    assignees: issue.assignees.map((assignee) => assignee.login),
-    labels: issue.labels.map((label) => label.name),
     state: issue.state,
   });
 }
@@ -130,34 +91,80 @@ async function handleIssueDelete(context) {
 
   await createOrUpdateIssue({
     issueId,
-    title: issue.title,
-    description: issue.body,
-    assignees: issue.assignees.map((assignee) => assignee.login),
-    labels: issue.labels.map((label) => label.name),
     state: issue.state,
   });
 }
 
-async function checkOrganizationAndRepository(context) {
-  if (context.payload.repository.owner.type !== 'Organization') {
-    const repositoryId = context.payload.repository.id;
-    const repository = await getRepositoryByRepoId(repositoryId);
+async function handleRepositoryAdd(context) {
+  const { repositories_added: repositories, installation } = context.payload;
 
-    if (!repository || repository.state !== 'accepted') {
+  // eslint-disable-next-line no-restricted-syntax
+  for (const repository of repositories) {
+    // eslint-disable-next-line no-await-in-loop
+    await createOrUpdateRepository({
+      repositoryId: repository.id,
+      name: repository.name,
+      full_name: repository.full_name,
+      owner: installation.account.login,
+      type: 'Organization',
+      state: 'accepted',
+    });
+  }
+}
+
+async function handleRepositoryRemove(context) {
+  const { repositories_removed: repositories, installation } = context.payload;
+
+  // eslint-disable-next-line no-restricted-syntax
+  for (const repository of repositories) {
+    // eslint-disable-next-line no-await-in-loop
+    await createOrUpdateRepository({
+      repositoryId: repository.id,
+      name: repository.name,
+      full_name: repository.full_name,
+      owner: installation.account.login,
+      type: 'Organization',
+      state: 'deleted',
+    });
+  }
+}
+
+async function checkOrganizationAndRepository(context, type = 'issue') {
+  if (type === 'issue') {
+    if (context.payload.repository.owner.type !== 'Organization') {
+      const repositoryId = context.payload.repository.id;
+      const repository = await getRepositoryByRepoId(repositoryId);
+
+      if (!repository || repository.state !== 'accepted') {
+        return false;
+      }
+
+      return true;
+    }
+    const organizationId = context.payload.organization.id;
+
+    const organization = await getOrganizationByOrgId(organizationId);
+
+    if (!organization || organization.state !== 'accepted') {
       return false;
     }
 
     return true;
   }
-  const organizationId = context.payload.organization.id;
 
-  const organization = await getOrganizationByOrgId(organizationId);
+  if (type === 'installation') {
+    const organizationId = context.payload.installation.account.id;
 
-  if (!organization || organization.state !== 'accepted') {
-    return false;
+    const organization = await getOrganizationByOrgId(organizationId);
+
+    if (!organization || organization.state !== 'accepted') {
+      return false;
+    }
+
+    return true;
   }
 
-  return true;
+  return false;
 }
 
 async function handlePriceCommand(context) {
@@ -190,5 +197,7 @@ module.exports = {
   handleIssueReopen,
   handlePriceCommand,
   handleAssigneeUpdate,
+  handleRepositoryAdd,
+  handleRepositoryRemove,
   checkOrganizationAndRepository,
 };

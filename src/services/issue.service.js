@@ -63,8 +63,8 @@ const updateIssueByIssueId = async (issueId, updateBody) => {
  * @param {ObjectId} issueId
  * @returns {Promise<Issue>}
  */
-const deleteIssueById = async (issueId) => {
-  const issue = await getIssueById(issueId);
+const deleteIssueByIssueId = async (issueId) => {
+  const issue = await getIssueByIssueId(issueId);
   if (!issue) {
     throw new ApiError(httpStatus.NOT_FOUND, 'Issue not found');
   }
@@ -91,6 +91,6 @@ module.exports = {
   getIssueById,
   getIssueByIssueId,
   updateIssueByIssueId,
-  deleteIssueById,
+  deleteIssueByIssueId,
   createOrUpdateIssue,
 };
