@@ -1,6 +1,7 @@
 const { createOrUpdateIssue, getIssueByIssueId, updateIssueByIssueId, deleteIssueByIssueId } = require('./issue.service');
 const { getOrganizationByOrgId } = require('./organization.service');
 const { getRepositoryByRepoId, createOrUpdateRepository } = require('./repository.service');
+const { createOrUpdatePullRequest } = require('./pr.service');
 
 async function sendComment(context, message) {
   const params = context.issue({ body: message });
@@ -9,7 +10,6 @@ async function sendComment(context, message) {
 
 async function handleIssueCreate(context) {
   const { issue, repository } = context.payload;
-  const repo = await getRepositoryByRepoId(repository.id);
   const issueId = issue.id;
 
   await createOrUpdateIssue({
@@ -17,7 +17,7 @@ async function handleIssueCreate(context) {
     title: issue.title,
     description: issue.body,
     assignees: issue.assignees.map((assignee) => assignee.login),
-    repository: repo,
+    repositoryId: repository.id,
     creator: context.payload.sender.login,
     labels: issue.labels.map((label) => label.name),
     state: issue.state,
@@ -129,6 +129,47 @@ async function handleRepositoryRemove(context) {
   }
 }
 
+async function handlePullRequestCreate(context) {
+  const { pull_request: pullRequest, repository } = context.payload;
+  // TODO: Fetch linked issues by GraphQL query
+
+  await createOrUpdatePullRequest({
+    pullRequestId: pullRequest.id,
+    title: pullRequest.title,
+    body: pullRequest.body,
+    repositoryId: repository.id,
+    assignees: pullRequest.assignees.map((assignee) => assignee.login),
+    requestedReviewers: pullRequest.requested_reviewers.map((reviewer) => reviewer.login),
+    linkedIssues: [],
+    state: pullRequest.state,
+    labels: pullRequest.labels.map((label) => label.name),
+    creator: pullRequest.user.login,
+    merged: pullRequest.merged,
+    commits: pullRequest.commits,
+    additions: pullRequest.additions,
+    deletions: pullRequest.deletions,
+    changedFiles: pullRequest.changed_files,
+    comments: pullRequest.comments,
+    reviewComments: pullRequest.review_comments,
+    maintainerCanModify: pullRequest.maintainer_can_modify,
+    mergeable: pullRequest.mergeable,
+    authorAssociation: pullRequest.author_association,
+    draft: pullRequest.draft,
+  });
+}
+
+async function handlePullRequestEdit() {
+  // TODO: Implement this function
+}
+
+async function handlePullRequestClose() {
+  // TODO: Implement this function
+}
+
+async function handlePullRequestReopen() {
+  // TODO: Implement this function
+}
+
 async function checkOrganizationAndRepository(context, type = 'issue') {
   if (type === 'issue') {
     if (context.payload.repository.owner.type !== 'Organization') {
@@ -199,5 +240,9 @@ module.exports = {
   handleAssigneeUpdate,
   handleRepositoryAdd,
   handleRepositoryRemove,
+  handlePullRequestCreate,
+  handlePullRequestEdit,
+  handlePullRequestClose,
+  handlePullRequestReopen,
   checkOrganizationAndRepository,
 };

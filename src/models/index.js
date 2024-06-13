@@ -4,3 +4,4 @@ module.exports.Admin = require('./admin.model');
 module.exports.Issue = require('./issue.model');
 module.exports.Organization = require('./organization.model');
 module.exports.Repository = require('./repository.model');
+module.exports.PullRequest = require('./pr.model');

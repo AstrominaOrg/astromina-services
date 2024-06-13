@@ -11,6 +11,7 @@ const {
   checkOrganizationAndRepository,
   handlePriceCommand,
   handleRepositoryRemove,
+  handlePullRequestCreate,
 } = require('./services/gitbot.service');
 
 /**
@@ -20,6 +21,10 @@ const {
 
 module.exports = (app) => {
   app.log.info('Probot app is running!');
+
+  /*
+  ISSUE EVENTS
+  */
 
   app.on('issues.opened', async (context) => {
     if (await checkOrganizationAndRepository(context)) {
@@ -75,6 +80,10 @@ module.exports = (app) => {
     }
   });
 
+  /*
+  REPOSITORY EVENTS
+  */
+
   app.on('installation_repositories.added', async (context) => {
     if (await checkOrganizationAndRepository(context, 'installation')) {
       handleRepositoryAdd(context);
@@ -84,6 +93,16 @@ module.exports = (app) => {
   app.on('installation_repositories.removed', async (context) => {
     if (await checkOrganizationAndRepository(context, 'installation')) {
       handleRepositoryRemove(context);
+    }
+  });
+
+  /*
+  PULL REQUEST EVENTS
+  */
+
+  app.on('pull_request.opened', async (context) => {
+    if (await checkOrganizationAndRepository(context)) {
+      handlePullRequestCreate(context);
     }
   });
 };

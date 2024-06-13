@@ -1,5 +1,4 @@
 const mongoose = require('mongoose');
-const Repository = require('./repository.model');
 const { toJSON } = require('./plugins');
 
 const issueSchema = new mongoose.Schema(
@@ -20,7 +19,10 @@ const issueSchema = new mongoose.Schema(
       type: [String],
       default: [],
     },
-    repository: Repository.schema,
+    repositoryId: {
+      type: Number,
+      required: true,
+    },
     creator: {
       type: String,
     },
