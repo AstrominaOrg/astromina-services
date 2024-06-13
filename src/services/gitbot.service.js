@@ -10,10 +10,10 @@ async function sendComment(context, message) {
 
 async function handleIssueCreate(context) {
   const { issue, repository } = context.payload;
-  const issueId = issue.id;
 
   await createOrUpdateIssue({
-    issueId,
+    issueId: issue.id,
+    number: issue.number,
     title: issue.title,
     description: issue.body,
     assignees: issue.assignees.map((assignee) => assignee.login),
@@ -26,30 +26,27 @@ async function handleIssueCreate(context) {
 
 async function handleAssigneeUpdate(context) {
   const { issue } = context.payload;
-  const issueId = issue.id;
 
   await createOrUpdateIssue({
-    issueId,
+    issueId: issue.id,
     assignees: issue.assignees.map((assignee) => assignee.login),
   });
 }
 
 async function handleIssueClose(context) {
   const { issue } = context.payload;
-  const issueId = issue.id;
 
   await createOrUpdateIssue({
-    issueId,
+    issueId: issue.id,
     state: issue.state,
   });
 }
 
 async function handleIssueLabel(context) {
   const { issue } = context.payload;
-  const issueId = issue.id;
 
   await createOrUpdateIssue({
-    issueId,
+    issueId: issue.id,
     labels: issue.labels.map((label) => label.name),
   });
 }
@@ -63,20 +60,18 @@ async function handleIssueTransfer(context) {
 
 async function handleIssueReopen(context) {
   const { issue } = context.payload;
-  const issueId = issue.id;
 
   await createOrUpdateIssue({
-    issueId,
+    issueId: issue.id,
     state: issue.state,
   });
 }
 
 async function handleIssueEdit(context) {
   const { issue } = context.payload;
-  const issueId = issue.id;
 
   await createOrUpdateIssue({
-    issueId,
+    issueId: issue.id,
     title: issue.title,
     description: issue.body,
     assignees: issue.assignees.map((assignee) => assignee.login),
@@ -87,10 +82,9 @@ async function handleIssueEdit(context) {
 
 async function handleIssueDelete(context) {
   const { issue } = context.payload;
-  const issueId = issue.id;
 
   await createOrUpdateIssue({
-    issueId,
+    issueId: issue.id,
     state: issue.state,
   });
 }
@@ -135,6 +129,7 @@ async function handlePullRequestCreate(context) {
 
   await createOrUpdatePullRequest({
     pullRequestId: pullRequest.id,
+    number: pullRequest.number,
     title: pullRequest.title,
     body: pullRequest.body,
     repositoryId: repository.id,

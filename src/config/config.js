@@ -24,6 +24,12 @@ const envVarsSchema = Joi.object()
     SMTP_PASSWORD: Joi.string().description('password for email server'),
     EMAIL_FROM: Joi.string().description('the from field in the emails sent by the app'),
     DISCORD_TOKEN: Joi.string().description('Discord bot token'),
+    GITHUB_CLIENT_ID: Joi.string().description('GitHub client ID'),
+    GITHUB_CLIENT_SECRET: Joi.string().description('GitHub client secret'),
+    GITHUB_PRIVATE_KEY: Joi.string().description('GitHub app private key'),
+    GITHUB_APP_ID: Joi.string().description('GitHub app ID'),
+    GITHUB_CALLBACK_URL: Joi.string().description('GitHub app callback URL'),
+    GITHUB_JWT: Joi.string().description('GitHub app JWT'),
   })
   .unknown();
 
@@ -68,6 +74,10 @@ module.exports = {
   github: {
     clientId: envVars.GITHUB_CLIENT_ID,
     clientSecret: envVars.GITHUB_CLIENT_SECRET,
+    privateKey: envVars.PRIVATE_KEY,
+    appId: envVars.APP_ID,
+    appInstallationId: envVars.GITHUB_APP_INSTALLATION_ID,
     callbackUrl: envVars.GITHUB_CALLBACK_URL,
+    jwt: envVars.GITHUB_JWT,
   },
 };

@@ -8,6 +8,10 @@ const pullRequestScheme = new mongoose.Schema(
       required: true,
       unique: true,
     },
+    number: {
+      type: Number,
+      required: true,
+    },
     title: {
       type: String,
       required: true,

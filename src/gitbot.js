@@ -26,6 +26,10 @@ module.exports = (app) => {
   ISSUE EVENTS
   */
 
+  app.onAny(async (context) => {
+    app.log.info(context.payload.action);
+  });
+
   app.on('issues.opened', async (context) => {
     if (await checkOrganizationAndRepository(context)) {
       handleIssueCreate(context);
@@ -100,7 +104,8 @@ module.exports = (app) => {
   PULL REQUEST EVENTS
   */
 
-  app.on('pull_request.opened', async (context) => {
+  app.on(['pull_request.opened', 'pull_request.reopened'], async (context) => {
+    app.log.info('Pull request opened');
     if (await checkOrganizationAndRepository(context)) {
       handlePullRequestCreate(context);
     }
