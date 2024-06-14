@@ -104,7 +104,7 @@ module.exports = (app) => {
   PULL REQUEST EVENTS
   */
 
-  app.on(['pull_request.opened', 'pull_request.reopened'], async (context) => {
+  app.on(['pull_request.opened', 'pull_request.reopened', 'pull_request.edited'], async (context) => {
     app.log.info('Pull request opened');
     if (await checkOrganizationAndRepository(context)) {
       handlePullRequestCreate(context);

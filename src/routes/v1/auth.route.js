@@ -19,7 +19,7 @@ router.post('/verify-email', validate(authValidation.verifyEmail), authControlle
 router.get('/github', passport.authenticate('github', { scope: ['user:email'] }));
 
 router.get('/github/callback', passport.authenticate('github', { failureRedirect: '/login' }), (req, res) => {
-  res.redirect('/');
+  res.redirect('/v1/docs');
 });
 
 module.exports = router;

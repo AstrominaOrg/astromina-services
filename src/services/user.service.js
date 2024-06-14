@@ -79,6 +79,41 @@ const deleteUserById = async (userId) => {
   return user;
 };
 
+/**
+ * Find user by githubId
+ * @param {string} githubId
+ * @returns {Promise<User>}
+ */
+const getUserByGithubId = async (githubId) => {
+  return User.findOne({ 'github.githubId': githubId });
+};
+
+/**
+ * Create or update user by githubId
+ * @param {Object} profile
+ * @returns {Promise<User>}
+ */
+const createUserByGithubId = async (profile) => {
+  const user = await getUserByGithubId(profile.id);
+
+  if (user) {
+    return user;
+  }
+
+  return User.create({
+    name: profile.displayName || profile.username,
+    email: profile._json.email,
+    github: {
+      id: profile.id,
+      username: profile.username,
+      emails: profile.emails.map((email) => email.value),
+      photos: profile.photos.map((photo) => photo.value),
+      company: profile._json.company,
+      bio: profile._json.bio,
+    },
+  });
+};
+
 module.exports = {
   createUser,
   queryUsers,
@@ -86,4 +121,5 @@ module.exports = {
   getUserByEmail,
   updateUserById,
   deleteUserById,
+  createUserByGithubId,
 };

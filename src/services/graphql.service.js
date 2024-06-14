@@ -65,7 +65,7 @@ const getLinkedIssues = async (repository, owner, prNumber, maxIssues) => {
     return issueData;
   } catch (error) {
     logger.error('Error fetching linked issues:', error);
-    throw error;  // Re-throw the error to handle it in the calling function
+    throw error;  
   }
 };
 

@@ -2,6 +2,7 @@ const { createOrUpdateIssue, getIssueByIssueId, updateIssueByIssueId, deleteIssu
 const { getOrganizationByOrgId } = require('./organization.service');
 const { getRepositoryByRepoId, createOrUpdateRepository } = require('./repository.service');
 const { createOrUpdatePullRequest } = require('./pr.service');
+const { getLinkedIssues } = require('./graphql.service');
 
 async function sendComment(context, message) {
   const params = context.issue({ body: message });
@@ -125,7 +126,7 @@ async function handleRepositoryRemove(context) {
 
 async function handlePullRequestCreate(context) {
   const { pull_request: pullRequest, repository } = context.payload;
-  // TODO: Fetch linked issues by GraphQL query
+  const linkedIssues = await getLinkedIssues(repository.name, repository.owner.login, pullRequest.number, 5);
 
   await createOrUpdatePullRequest({
     pullRequestId: pullRequest.id,
@@ -135,7 +136,7 @@ async function handlePullRequestCreate(context) {
     repositoryId: repository.id,
     assignees: pullRequest.assignees.map((assignee) => assignee.login),
     requestedReviewers: pullRequest.requested_reviewers.map((reviewer) => reviewer.login),
-    linkedIssues: [],
+    linkedIssues: linkedIssues.repository.pullRequest.closingIssuesReferences.nodes.map((issue) => issue.number),
     state: pullRequest.state,
     labels: pullRequest.labels.map((label) => label.name),
     creator: pullRequest.user.login,

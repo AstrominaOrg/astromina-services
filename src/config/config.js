@@ -74,6 +74,8 @@ module.exports = {
   github: {
     clientId: envVars.GITHUB_CLIENT_ID,
     clientSecret: envVars.GITHUB_CLIENT_SECRET,
+    oauthClientId: envVars.GITHUB_OAUTH_CLIENT_ID,
+    oauthClientSecret: envVars.GITHUB_OAUTH_CLIENT_SECRET,
     privateKey: envVars.PRIVATE_KEY,
     appId: envVars.APP_ID,
     appInstallationId: envVars.GITHUB_APP_INSTALLATION_ID,

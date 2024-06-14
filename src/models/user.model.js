@@ -22,10 +22,33 @@ const userSchema = mongoose.Schema(
         }
       },
     },
-    githubId: {
-      type: String,
-      required: true,
-      unique: true,
+    github: {
+      id: {
+        type: String,
+        required: true,
+        unique: true,
+      },
+      username: {
+        type: String,
+        required: true,
+        unique: true,
+      },
+      emails: {
+        type: [String],
+        required: true,
+      },
+      photos: {
+        type: [String],
+        required: true,
+      },
+      company: {
+        type: String,
+        trim: true,
+      },
+      bio: {
+        type: String,
+        trim: true,
+      },
     },
     discordId: {
       type: String,
