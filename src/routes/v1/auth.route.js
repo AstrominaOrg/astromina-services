@@ -17,7 +17,7 @@ router.get(
   authController.githubCallback
 );
 
-router.get('/discord', auth('discord'), authController.discord, passport.authenticate('discord'));
+router.get('/discord', auth('discord'), authController.discord);
 router.get(
   '/discord/callback',
   passport.authenticate('discord', { failureRedirect: '/login' }),

@@ -53,7 +53,6 @@ const userSchema = mongoose.Schema(
     discord: {
       id: {
         type: String,
-        required: true,
         unique: true,
       },
     },

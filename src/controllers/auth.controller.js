@@ -1,4 +1,5 @@
 const httpStatus = require('http-status');
+const passport = require('passport');
 const catchAsync = require('../utils/catchAsync');
 const { authService, tokenService, userService } = require('../services');
 const logger = require('../config/logger');
@@ -10,13 +11,15 @@ const githubCallback = catchAsync(async (req, res) => {
 });
 
 const discord = catchAsync(async (req, res, next) => {
-  req.session.userId = req.authUser._id;
-  next();
+  passport.authenticate('discord', {
+    state: JSON.stringify({ id: req.authUser.id }),
+  })(req, res, next);
 });
 
 const discordCallback = catchAsync(async (req, res) => {
   const { profile } = req.authInfo;
-  const id = req.session.userId;
+
+  const { id } = JSON.parse(req.query.state);
   logger.info(`Discord callback for user ${id}`);
   await userService.updateUserDiscordByUserId(id, profile);
   res.redirect(`/v1/docs`);
