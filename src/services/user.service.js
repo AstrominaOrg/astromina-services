@@ -85,7 +85,7 @@ const deleteUserById = async (userId) => {
  * @returns {Promise<User>}
  */
 const getUserByGithubId = async (githubId) => {
-  return User.findOne({ 'github.githubId': githubId });
+  return User.findOne({ 'github.id': githubId });
 };
 
 /**
@@ -114,6 +114,28 @@ const createUserByGithubId = async (profile) => {
   });
 };
 
+/**
+ * Update user by discordId
+ * @param {Object} profile
+ * @returns {Promise<User>}
+ */
+
+const updateUserDiscordByUserId = async (userId, profile) => {
+  const user = await getUserById(userId);
+
+  if (!user) {
+    throw new ApiError(httpStatus.NOT_FOUND, 'User not found');
+  }
+
+  user.discord = {
+    id: profile.id,
+  };
+
+  await user.save();
+
+  return user;
+};
+
 module.exports = {
   createUser,
   queryUsers,
@@ -122,4 +144,5 @@ module.exports = {
   updateUserById,
   deleteUserById,
   createUserByGithubId,
+  updateUserDiscordByUserId,
 };

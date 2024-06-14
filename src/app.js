@@ -6,9 +6,10 @@ const compression = require('compression');
 const cors = require('cors');
 const passport = require('passport');
 const httpStatus = require('http-status');
+const session = require('express-session');
 const config = require('./config/config');
 const morgan = require('./config/morgan');
-const { jwtStrategy, githubStrategy } = require('./config/passport');
+const { jwtStrategy, githubStrategy, discordStrategy } = require('./config/passport');
 const { authLimiter } = require('./middlewares/rateLimiter');
 const routes = require('./routes/v1');
 const { errorConverter, errorHandler } = require('./middlewares/error');
@@ -23,6 +24,14 @@ if (config.env !== 'test') {
 
 // set security HTTP headers
 app.use(helmet());
+
+// set secure attribute for cookies
+app.use(
+  session({
+    secret: config.session.secret,
+    resave: false,
+  })
+);
 
 // parse json request body
 app.use(express.json());
@@ -45,6 +54,7 @@ app.options('*', cors());
 app.use(passport.initialize());
 passport.use('jwt', jwtStrategy);
 passport.use(githubStrategy);
+passport.use(discordStrategy);
 passport.serializeUser((user, done) => done(null, user));
 passport.deserializeUser((user, done) => done(null, user));
 

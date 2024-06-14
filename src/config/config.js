@@ -68,8 +68,13 @@ module.exports = {
     },
     from: envVars.EMAIL_FROM,
   },
+  session: {
+    secret: envVars.SESSION_SECRET,
+  },
   discord: {
     token: envVars.DISCORD_TOKEN,
+    oauthClientId: envVars.DISCORD_OAUTH_CLIENT_ID,
+    oauthClientSecret: envVars.DISCORD_OAUTH_CLIENT_SECRET,
   },
   github: {
     clientId: envVars.GITHUB_CLIENT_ID,

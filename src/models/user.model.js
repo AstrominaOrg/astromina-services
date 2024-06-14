@@ -50,10 +50,12 @@ const userSchema = mongoose.Schema(
         trim: true,
       },
     },
-    discordId: {
-      type: String,
-      unique: true,
-      sparse: true,
+    discord: {
+      id: {
+        type: String,
+        required: true,
+        unique: true,
+      },
     },
     role: {
       type: String,

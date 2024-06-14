@@ -1,5 +1,7 @@
 const { Strategy: JwtStrategy, ExtractJwt } = require('passport-jwt');
 const { Strategy: GitHubStrategy } = require('passport-github2');
+const { Strategy: DiscordStrategy } = require('passport-discord');
+
 const config = require('./config');
 const { tokenTypes } = require('./tokens');
 const { User } = require('../models');
@@ -7,7 +9,7 @@ const { createUserByGithubId } = require('../services/user.service');
 
 const jwtOptions = {
   secretOrKey: config.jwt.secret,
-  jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
+  jwtFromRequest: ExtractJwt.fromUrlQueryParameter('token'),
 };
 
 const jwtVerify = async (payload, done) => {
@@ -33,11 +35,26 @@ const githubStrategy = new GitHubStrategy(
   },
   async (accessToken, refreshToken, profile, done) => {
     try {
-      const user = createUserByGithubId(profile);
-
-      done(null, user);
+      const user = await createUserByGithubId(profile);
+      return done(null, user);
     } catch (error) {
-      done(error, false);
+      return done(error, false);
+    }
+  }
+);
+
+const discordStrategy = new DiscordStrategy(
+  {
+    clientID: config.discord.oauthClientId,
+    clientSecret: config.discord.oauthClientSecret,
+    callbackURL: config.discord.callbackUrl,
+    scope: ['identify', 'email'],
+  },
+  async (accessToken, refreshToken, profile, done) => {
+    try {
+      return done(null, profile, { profile });
+    } catch (error) {
+      return done(error, false);
     }
   }
 );
@@ -47,4 +64,5 @@ const jwtStrategy = new JwtStrategy(jwtOptions, jwtVerify);
 module.exports = {
   jwtStrategy,
   githubStrategy,
+  discordStrategy,
 };
