@@ -7,7 +7,7 @@ const { authService, tokenService, userService } = require('../services');
 const githubCallback = catchAsync(async (req, res) => {
   const { user } = req;
   const tokens = await tokenService.generateAuthTokens(user);
-  res.redirect(`${config.frontendUrl}/auth/callback?token=${tokens.access.token}`);
+  res.redirect(`${config.frontendUrl}?token=${tokens.access.token}`);
 });
 
 const discord = catchAsync(async (req, res, next) => {
