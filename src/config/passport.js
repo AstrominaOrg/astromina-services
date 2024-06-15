@@ -4,7 +4,7 @@ const { Strategy: DiscordStrategy } = require('passport-discord');
 
 const config = require('./config');
 const { tokenTypes } = require('./tokens');
-const { User } = require('../models');
+const { User, Admin } = require('../models');
 const { createUserByGithubId } = require('../services/user.service');
 
 const jwtOptions = {
@@ -17,7 +17,14 @@ const jwtVerify = async (payload, done) => {
     if (payload.type !== tokenTypes.ACCESS) {
       throw new Error('Invalid token type');
     }
-    const user = await User.findById(payload.sub);
+    let user;
+    if (payload.admin) {
+      user = await Admin.findById(payload.sub);
+      user.role = 'admin';
+    } else {
+      user = await User.findById(payload.sub);
+      user.role = 'user';
+    }
     if (!user) {
       return done(null, false);
     }

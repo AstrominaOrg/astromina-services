@@ -1,7 +1,6 @@
 const mongoose = require('mongoose');
 const validator = require('validator');
 const { toJSON, paginate } = require('./plugins');
-const { roles } = require('../config/roles');
 
 const userSchema = mongoose.Schema(
   {
@@ -55,11 +54,6 @@ const userSchema = mongoose.Schema(
         type: String,
         unique: true,
       },
-    },
-    role: {
-      type: String,
-      enum: roles,
-      default: 'user',
     },
   },
   {

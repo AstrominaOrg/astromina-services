@@ -1,6 +1,5 @@
 const mongoose = require('mongoose');
-const mongoosePaginate = require('mongoose-paginate-v2');
-const { toJSON } = require('./plugins');
+const { toJSON, paginate } = require('./plugins');
 
 const issueSchema = new mongoose.Schema(
   {
@@ -51,7 +50,7 @@ const issueSchema = new mongoose.Schema(
 );
 
 issueSchema.plugin(toJSON);
-issueSchema.plugin(mongoosePaginate);
+issueSchema.plugin(paginate);
 issueSchema.index({ issueId: 1 }, { unique: true });
 
 /**

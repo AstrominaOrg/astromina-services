@@ -27,6 +27,10 @@ const tokenSchema = mongoose.Schema(
       type: Boolean,
       default: false,
     },
+    admin: {
+      type: Boolean,
+      default: false,
+    },
   },
   {
     timestamps: true,

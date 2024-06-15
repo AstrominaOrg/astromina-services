@@ -2,7 +2,10 @@ const httpStatus = require('http-status');
 const passport = require('passport');
 const config = require('../config/config');
 const catchAsync = require('../utils/catchAsync');
-const { authService, tokenService, userService } = require('../services');
+const { ApiError } = require('../utils/ApiError');
+const { authService, tokenService, userService, emailService, adminService } = require('../services');
+const oneTimePassword = require('../config/otp');
+const { set, get } = require('../config/redis');
 
 const githubCallback = catchAsync(async (req, res) => {
   const { user } = req;
@@ -33,10 +36,35 @@ const refreshTokens = catchAsync(async (req, res) => {
   res.send({ ...tokens });
 });
 
+const sendOtp = catchAsync(async (req, res) => {
+  const otp = oneTimePassword.generate();
+  await set(req.body.email, otp, 300);
+  await emailService.sendEmail(req.body.email, 'OTP', otp);
+  res.status(httpStatus.NO_CONTENT).send();
+});
+
+const verifyOtp = catchAsync(async (req, res) => {
+  const { email, otp } = req.body;
+  const admin = await adminService.getAdminByEmail(email);
+  const otpInCache = await get(email);
+  if (!admin) {
+    throw new ApiError(httpStatus.NOT_FOUND, 'No admin found with this email');
+  }
+  if (otpInCache !== otp) {
+    throw new ApiError(httpStatus.UNAUTHORIZED, 'Incorrect OTP');
+  }
+
+  const tokens = await tokenService.generateAdminAuthTokens(admin);
+
+  res.send({ ...tokens });
+});
+
 module.exports = {
   discord,
   githubCallback,
   discordCallback,
   logout,
   refreshTokens,
+  sendOtp,
+  verifyOtp,
 };

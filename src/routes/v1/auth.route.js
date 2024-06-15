@@ -24,4 +24,7 @@ router.get(
   authController.discordCallback
 );
 
+router.post('/send-otp', validate(authValidation.sendOtp), authController.sendOtp);
+router.post('/verify-otp', validate(authValidation.verifyOtp), authController.verifyOtp);
+
 module.exports = router;

@@ -28,9 +28,24 @@ const refreshTokens = {
   }),
 };
 
+const sendOtp = {
+  body: Joi.object().keys({
+    email: Joi.string().required().email(),
+  }),
+};
+
+const verifyOtp = {
+  body: Joi.object().keys({
+    email: Joi.string().required().email(),
+    otp: Joi.string().required(),
+  }),
+};
+
 module.exports = {
   register,
   login,
   logout,
   refreshTokens,
+  sendOtp,
+  verifyOtp,
 };

@@ -17,4 +17,21 @@ client.on('connect', () => {
   logger.info('Redis connected');
 });
 
-module.exports = client;
+const set = async (key, value, duration) => {
+  await client.setEx(key, duration, JSON.stringify(value));
+};
+
+const get = async (key) => {
+  if (!client) {
+    return null;
+  }
+
+  const data = await client.get(key);
+  return data ? JSON.parse(data) : null;
+};
+
+module.exports = {
+  client,
+  set,
+  get,
+};
