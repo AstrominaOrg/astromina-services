@@ -8,8 +8,8 @@ const logger = require('./config/logger');
 let server;
 mongoose.connect(config.mongoose.url, config.mongoose.options).then(() => {
   logger.info('Connected to MongoDB');
-  server = app.listen(3045, () => {
-    logger.info(`Listening to port ${3045}`);
+  server = app.listen(config.appPort, () => {
+    logger.info(`Listening to port ${config.appPort}`);
   });
   run(gitbot);
 });

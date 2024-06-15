@@ -30,6 +30,12 @@ const envVarsSchema = Joi.object()
     GITHUB_APP_ID: Joi.string().description('GitHub app ID'),
     GITHUB_CALLBACK_URL: Joi.string().description('GitHub app callback URL'),
     GITHUB_JWT: Joi.string().description('GitHub app JWT'),
+    GITHUB_OAUTH_CLIENT_ID: Joi.string().description('GitHub OAuth client ID'),
+    GITHUB_OAUTH_CLIENT_SECRET: Joi.string().description('GitHub OAuth client secret'),
+    GITHUB_APP_INSTALLATION_ID: Joi.string().description('GitHub app installation ID'),
+    SESSION_SECRET: Joi.string().required().description('Session secret key'),
+    FRONTEND_URL: Joi.string().description('Frontend URL'),
+    APP_PORT: Joi.number().default(3000).description('App port'),
   })
   .unknown();
 
@@ -42,6 +48,8 @@ if (error) {
 module.exports = {
   env: envVars.NODE_ENV,
   port: envVars.PORT,
+  appPort: envVars.APP_PORT,
+  frontendUrl: envVars.FRONTEND_URL,
   mongoose: {
     url: envVars.MONGODB_URL + (envVars.NODE_ENV === 'test' ? '-test' : ''),
     options: {

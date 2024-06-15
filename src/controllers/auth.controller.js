@@ -1,13 +1,13 @@
 const httpStatus = require('http-status');
 const passport = require('passport');
+const config = require('../config/config');
 const catchAsync = require('../utils/catchAsync');
 const { authService, tokenService, userService } = require('../services');
-const logger = require('../config/logger');
 
 const githubCallback = catchAsync(async (req, res) => {
   const { user } = req;
   const tokens = await tokenService.generateAuthTokens(user);
-  res.redirect(`/v1/docs?token=${tokens.access.token}`);
+  res.redirect(`${config.frontendUrl}/auth/callback?token=${tokens.access.token}`);
 });
 
 const discord = catchAsync(async (req, res, next) => {
@@ -18,9 +18,7 @@ const discord = catchAsync(async (req, res, next) => {
 
 const discordCallback = catchAsync(async (req, res) => {
   const { profile } = req.authInfo;
-
   const { id } = JSON.parse(req.query.state);
-  logger.info(`Discord callback for user ${id}`);
   await userService.updateUserDiscordByUserId(id, profile);
   res.redirect(`/v1/docs`);
 });
