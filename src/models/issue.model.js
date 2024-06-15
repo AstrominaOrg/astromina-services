@@ -43,6 +43,19 @@ const issueSchema = new mongoose.Schema(
       type: [String],
       default: [],
     },
+    thread: {
+      id: {
+        type: String,
+        unique: true,
+      },
+      name: {
+        type: String,
+      },
+      members: {
+        type: [String],
+        default: [],
+      },
+    },
   },
   {
     timestamps: true,

@@ -1,6 +1,5 @@
 const {
   handleIssueCreate,
-  handleAssigneeUpdate,
   handleIssueClose,
   handleIssueDelete,
   handleIssueEdit,
@@ -12,6 +11,8 @@ const {
   handlePriceCommand,
   handleRepositoryRemove,
   handlePullRequestCreate,
+  handleAssigned,
+  handleUnassigned,
 } = require('./services/gitbot.service');
 
 /**
@@ -72,9 +73,15 @@ module.exports = (app) => {
     }
   });
 
-  app.on(['issues.assigned', 'issues.unassigned'], async (context) => {
+  app.on('issues.assigned', async (context) => {
     if (await checkOrganizationAndRepository(context)) {
-      handleAssigneeUpdate(context);
+      handleAssigned(context);
+    }
+  });
+
+  app.on('issues.unassigned', async (context) => {
+    if (await checkOrganizationAndRepository(context)) {
+      handleUnassigned(context);
     }
   });
 

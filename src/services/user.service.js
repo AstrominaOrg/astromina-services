@@ -136,6 +136,15 @@ const updateUserDiscordByUserId = async (userId, profile) => {
   return user;
 };
 
+/**
+ * Get user by discordId
+ * @param {string} discordId
+ * @returns {Promise<User>}
+ */
+const getUserByDiscordId = async (discordId) => {
+  return User.findOne({ 'discord.id': discordId });
+};
+
 module.exports = {
   createUser,
   queryUsers,
@@ -144,5 +153,7 @@ module.exports = {
   updateUserById,
   deleteUserById,
   createUserByGithubId,
+  getUserByDiscordId,
+  getUserByGithubId,
   updateUserDiscordByUserId,
 };
