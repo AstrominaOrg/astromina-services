@@ -27,7 +27,7 @@ module.exports = (app) => {
   */
 
   app.onAny(async (context) => {
-    app.log.info(context.payload.action);
+    app.log.info(`Event: ${context.payload.action}`);
   });
 
   app.on('issues.opened', async (context) => {

@@ -8,6 +8,7 @@ const createIssue = {
     state: Joi.string().required().valid('open', 'closed'),
     assignee: Joi.string(),
     price: Joi.number().integer().min(0),
+    token: Joi.string().required(),
   }),
 };
 
@@ -18,18 +19,21 @@ const getIssues = {
     sortBy: Joi.string(),
     limit: Joi.number().integer(),
     page: Joi.number().integer(),
+    token: Joi.string().required(),
   }),
 };
 
 const getIssue = {
   params: Joi.object().keys({
     issueId: Joi.string().custom(objectId),
+    token: Joi.string().required(),
   }),
 };
 
 const updateIssue = {
   params: Joi.object().keys({
     issueId: Joi.required().custom(objectId),
+    token: Joi.string().required(),
   }),
   body: Joi.object()
     .keys({
@@ -45,6 +49,7 @@ const updateIssue = {
 const deleteIssue = {
   params: Joi.object().keys({
     issueId: Joi.string().custom(objectId),
+    token: Joi.string().required(),
   }),
 };
 

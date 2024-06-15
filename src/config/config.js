@@ -36,6 +36,8 @@ const envVarsSchema = Joi.object()
     SESSION_SECRET: Joi.string().required().description('Session secret key'),
     FRONTEND_URL: Joi.string().description('Frontend URL'),
     APP_PORT: Joi.number().default(3000).description('App port'),
+    REDIS_HOST: Joi.string().description('Redis host'),
+    REDIS_PORT: Joi.number().description('Redis port'),
   })
   .unknown();
 
@@ -78,6 +80,10 @@ module.exports = {
   },
   session: {
     secret: envVars.SESSION_SECRET,
+  },
+  redis: {
+    host: envVars.REDIS_HOST,
+    port: envVars.REDIS_PORT,
   },
   discord: {
     token: envVars.DISCORD_TOKEN,

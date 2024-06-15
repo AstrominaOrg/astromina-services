@@ -3,13 +3,14 @@ const auth = require('../../middlewares/auth');
 const validate = require('../../middlewares/validate');
 const issueValidation = require('../../validations/issue.validation');
 const issueController = require('../../controllers/issue.controller');
+const { cache } = require('../../middlewares/redis');
 
 const router = express.Router();
 
 router
   .route('/')
   .post(auth('manageIssues'), validate(issueValidation.createIssue), issueController.createIssue)
-  .get(auth('getIssues'), validate(issueValidation.getIssues), issueController.getIssues);
+  .get(auth('getIssues'), validate(issueValidation.getIssues), cache, issueController.getIssues);
 
 router
   .route('/:issueId')

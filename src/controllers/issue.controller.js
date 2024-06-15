@@ -3,6 +3,7 @@ const pick = require('../utils/pick');
 const ApiError = require('../utils/ApiError');
 const catchAsync = require('../utils/catchAsync');
 const { issueService } = require('../services');
+const { set } = require('../middlewares/redis');
 
 const createIssue = catchAsync(async (req, res) => {
   const issue = await issueService.createIssue(req.body);
@@ -13,6 +14,7 @@ const getIssues = catchAsync(async (req, res) => {
   const filter = pick(req.query, ['title', 'state']);
   const options = pick(req.query, ['sortBy', 'limit', 'page']);
   const result = await issueService.queryIssues(filter, options);
+  await set(req.originalUrl, result, 60);
   res.send(result);
 });
 
