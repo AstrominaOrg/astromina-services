@@ -1,20 +1,9 @@
 const {
-  handleIssueCreate,
-  handleIssueClose,
-  handleIssueDelete,
-  handleIssueEdit,
-  handleIssueReopen,
-  handleIssueTransfer,
-  handleIssueLabel,
-  handleRepositoryAdd,
-  checkOrganizationAndRepository,
-  handlePriceCommand,
-  handleRepositoryRemove,
-  handlePullRequestCreate,
-  handleAssigned,
-  handleUnassigned,
-} = require('./services/gitbot.service');
-
+  IssueEventService,
+  OrganizationEventService,
+  PullRequestEventService,
+  RepositoryEventService,
+} = require('./services/events');
 /**
  * This is the main entrypoint to your Probot app
  * @param {import('probot').Probot} app
@@ -23,87 +12,82 @@ const {
 module.exports = (app) => {
   app.log.info('Probot app is running!');
 
-  /*
-  ISSUE EVENTS
-  */
-
   app.onAny(async (context) => {
     app.log.info(`Event: ${context.payload.action}`);
   });
 
+  /*
+  ISSUE EVENT HANDLERS
+  */
+
   app.on('issues.opened', async (context) => {
-    if (await checkOrganizationAndRepository(context)) {
-      handleIssueCreate(context);
-    }
+    IssueEventService.handleIssueCreate(context);
   });
 
-  app.on('issues.closed', async (context) => {
-    if (await checkOrganizationAndRepository(context)) {
-      handleIssueClose(context);
+  app.on(
+    ['issues.closed', 'issues.deleted', 'issues.edited', 'issues.deleted', 'issues.labeled', 'issues.unlabeled'],
+    async (context) => {
+      IssueEventService.handleIssueChange(context);
     }
-  });
-
-  app.on('issues.deleted', async (context) => {
-    if (await checkOrganizationAndRepository(context)) {
-      handleIssueDelete(context);
-    }
-  });
-
-  app.on('issues.edited', async (context) => {
-    if (await checkOrganizationAndRepository(context)) {
-      handleIssueEdit(context);
-    }
-  });
-
-  app.on('issues.reopened', async (context) => {
-    if (await checkOrganizationAndRepository(context)) {
-      handleIssueReopen(context);
-    }
-  });
+  );
 
   app.on('issues.transferred', async (context) => {
-    if (await checkOrganizationAndRepository(context)) {
-      handleIssueTransfer(context);
-    }
-  });
-
-  app.on(['issues.labeled', 'issues.unlabeled'], async (context) => {
-    if (await checkOrganizationAndRepository(context)) {
-      handleIssueLabel(context);
-    }
+    IssueEventService.handleIssueTransfer(context);
   });
 
   app.on('issues.assigned', async (context) => {
-    if (await checkOrganizationAndRepository(context)) {
-      handleAssigned(context);
-    }
+    IssueEventService.handleAssigned(context);
   });
 
   app.on('issues.unassigned', async (context) => {
-    if (await checkOrganizationAndRepository(context)) {
-      handleUnassigned(context);
-    }
+    IssueEventService.handleUnassigned(context);
   });
 
   app.on('issue_comment.created', async (context) => {
-    if (await checkOrganizationAndRepository(context)) {
-      handlePriceCommand(context);
-    }
+    IssueEventService.handlePriceCommand(context);
   });
 
   /*
-  REPOSITORY EVENTS
+  ORGANIZATION EVENT HANDLERS
   */
 
+  app.on('organization.member_added', async (context) => {
+    OrganizationEventService.handleMemberChange(context);
+  });
+
+  app.on('organization.member_removed', async (context) => {
+    OrganizationEventService.handleMemberChange(context);
+  });
+
+  /*
+  REPOSITORY EVENT HANDLERS
+  */
+
+  app.on(['star.created', 'star.deleted'], async (context) => {
+    RepositoryEventService.handleStar(context);
+  });
+
+  app.on('installation.created', async (context) => {
+    // eslint-disable-next-line no-restricted-syntax
+    for (const repository of context.payload.repositories) {
+      context.payload.repository = repository;
+      RepositoryEventService.handleRepositoryAdd(context);
+    }
+  });
+
   app.on('installation_repositories.added', async (context) => {
-    if (await checkOrganizationAndRepository(context, 'installation')) {
-      handleRepositoryAdd(context);
+    // eslint-disable-next-line no-restricted-syntax
+    for (const repository of context.payload.repositories_added) {
+      context.payload.repository = repository;
+      RepositoryEventService.handleRepositoryAdd(context);
     }
   });
 
   app.on('installation_repositories.removed', async (context) => {
-    if (await checkOrganizationAndRepository(context, 'installation')) {
-      handleRepositoryRemove(context);
+    // eslint-disable-next-line no-restricted-syntax
+    for (const repository of context.payload.repositories_removed) {
+      context.payload.repository = repository;
+      RepositoryEventService.handleRepositoryRemove(context);
     }
   });
 
@@ -112,9 +96,6 @@ module.exports = (app) => {
   */
 
   app.on(['pull_request.opened', 'pull_request.reopened', 'pull_request.edited'], async (context) => {
-    app.log.info('Pull request opened');
-    if (await checkOrganizationAndRepository(context)) {
-      handlePullRequestCreate(context);
-    }
+    PullRequestEventService.handlePullRequestCreate(context);
   });
 };
