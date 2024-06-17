@@ -7,4 +7,4 @@ module.exports.issueService = require('./issue.service');
 module.exports.organizationService = require('./organization.service');
 module.exports.repositoryService = require('./repository.service');
 module.exports.pullRequestService = require('./pr.service');
-module.exports.graphqlService = require('./graphql.service');
+module.exports.githubService = require('./github.service');

@@ -65,10 +65,50 @@ const getLinkedIssues = async (repository, owner, prNumber, maxIssues) => {
     return issueData;
   } catch (error) {
     logger.error('Error fetching linked issues:', error);
-    throw error;  
+    throw error;
+  }
+};
+
+/**
+ * Fetches members of a GitHub organization.
+ * @param {string} org - The name of the organization.
+ * @returns {Promise<Object>} The members of the organization.
+ */
+const getOrganizationMembers = async (org) => {
+  if (!octokitInstance) {
+    await initializeOctokit();
+  }
+
+  try {
+    const membersData = await octokitInstance.rest.orgs.listMembers({
+      org,
+    });
+
+    const members = membersData.data.map((member) => member);
+
+    const roles = await Promise.all(
+      members.map(async (member) => {
+        const role = await octokitInstance.rest.orgs.getMembershipForUser({
+          org,
+          username: member.login,
+        });
+
+        return {
+          login: member.login,
+          id: member.id,
+          role: role.data.role,
+        };
+      })
+    );
+
+    return roles;
+  } catch (error) {
+    logger.error('Error fetching organization members:', error);
+    throw error;
   }
 };
 
 module.exports = {
   getLinkedIssues,
+  getOrganizationMembers,
 };
