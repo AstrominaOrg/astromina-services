@@ -18,7 +18,12 @@ async function handleIssueCreate(context) {
     number: issue.number,
     title: issue.title,
     description: issue.body,
-    assignees: issue.assignees.map((assignee) => assignee.login),
+    assignees: issue.assignees.map((assignee) => {
+      return {
+        login: assignee.login,
+        id: assignee.id,
+      };
+    }),
     repositoryId: repository.id,
     creator: issue.user.login,
     labels: issue.labels.map((label) => label.name),
@@ -39,7 +44,24 @@ async function handleIssueChange(context) {
 }
 
 async function handleAssigned(context) {
-  const { issue, assignee } = context.payload;
+  const { issue, assignee, repository } = context.payload;
+
+  await createOrUpdateIssue({
+    issueId: issue.id,
+    number: issue.number,
+    title: issue.title,
+    description: issue.body,
+    assignees: issue.assignees.map((dev) => {
+      return {
+        login: dev.login,
+        id: dev.id,
+      };
+    }),
+    repositoryId: repository.id,
+    creator: issue.user.login,
+    labels: issue.labels.map((label) => label.name),
+    state: issue.state,
+  });
 
   const user = await getUserByGithubId(assignee.id);
 
@@ -51,10 +73,6 @@ async function handleAssigned(context) {
       await addThreadMember({ client: dcbot, threadId: userDB.thread.id, userId: discordId });
     }
   }
-  await createOrUpdateIssue({
-    issueId: issue.id,
-    assignees: issue.assignees.map((dev) => dev.login),
-  });
 }
 
 async function handleUnassigned(context) {
@@ -72,7 +90,12 @@ async function handleUnassigned(context) {
 
     await createOrUpdateIssue({
       issueId: issue.id,
-      assignees: issue.assignees.map((dev) => dev.login),
+      assignees: issue.assignees.map((dev) => {
+        return {
+          login: dev.login,
+          id: dev.id,
+        };
+      }),
     });
   }
 }
@@ -113,12 +136,21 @@ async function handlePriceCommand(context) {
       message: `Price has been updated to $${price}`,
     });
   } else {
+    const userDiscordIds = await Promise.all(
+      issue.assignees
+        .map(async (assignee) => {
+          const user = await getUserByGithubId(assignee.id);
+          return user.discord.id;
+        })
+        .filter((discordId) => discordId !== null)
+    );
+
     thread = await createPrivateThread({
       client: dcbot,
       channelId: config.discord.channelId,
       threadName: `Issue #${issue.number}`,
       initialMessage: `The issue #${issue.number} now marked as bounty with $${price} bounty. Assignees will be added to this thread when they are assigned to the issue.`,
-      ids: [],
+      ids: userDiscordIds,
       reason: 'Issue marked as bounty',
     });
   }

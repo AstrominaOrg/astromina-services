@@ -19,13 +19,14 @@ async function createPrivateThread({ client, channelId, threadName, initialMessa
       throw new Error('Invalid channel ID or the channel is not text-based.');
     }
 
-    const users = await Promise.all(ids.map((id) => client.users.cache.get(id)));
+    const users = await Promise.all(ids.map((id) => client.users.fetch(id)));
 
     const thread = await channel.threads.create({
       name: threadName,
       autoArchiveDuration,
       type: 12, // GUILD_PRIVATE_THREAD
       reason,
+      invitable: false,
     });
 
     // eslint-disable-next-line no-restricted-syntax

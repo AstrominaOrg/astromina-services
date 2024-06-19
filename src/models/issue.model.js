@@ -20,7 +20,16 @@ const issueSchema = new mongoose.Schema(
       type: String,
     },
     assignees: {
-      type: [String],
+      type: [
+        {
+          login: {
+            type: String,
+          },
+          id: {
+            type: Number,
+          },
+        },
+      ],
       default: [],
     },
     repositoryId: {
@@ -46,14 +55,12 @@ const issueSchema = new mongoose.Schema(
     thread: {
       id: {
         type: String,
-        unique: true,
       },
       name: {
         type: String,
       },
       members: {
         type: [String],
-        default: [],
       },
     },
   },
