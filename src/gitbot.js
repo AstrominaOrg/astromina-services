@@ -68,27 +68,30 @@ module.exports = (app) => {
   });
 
   app.on('installation.created', async (context) => {
-    // eslint-disable-next-line no-restricted-syntax
-    for (const repository of context.payload.repositories) {
+    const { repositories } = context.payload;
+
+    repositories.forEach((repository) => {
       context.payload.repository = repository;
       RepositoryEventService.handleRepositoryAdd(context);
-    }
+    });
   });
 
   app.on('installation_repositories.added', async (context) => {
-    // eslint-disable-next-line no-restricted-syntax
-    for (const repository of context.payload.repositories_added) {
+    const repositories = context.payload.repositories_added;
+
+    repositories.forEach((repository) => {
       context.payload.repository = repository;
       RepositoryEventService.handleRepositoryAdd(context);
-    }
+    });
   });
 
   app.on('installation_repositories.removed', async (context) => {
-    // eslint-disable-next-line no-restricted-syntax
-    for (const repository of context.payload.repositories_removed) {
+    const repositories = context.payload.repositories_removed;
+
+    repositories.forEach((repository) => {
       context.payload.repository = repository;
       RepositoryEventService.handleRepositoryRemove(context);
-    }
+    });
   });
 
   /*

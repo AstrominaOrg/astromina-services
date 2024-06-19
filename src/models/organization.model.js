@@ -23,6 +23,28 @@ const organizationSchema = new mongoose.Schema(
       enum: ['pending', 'accepted', 'rejected'],
       required: true,
     },
+    members: {
+      type: [
+        {
+          login: {
+            type: String,
+            required: true,
+          },
+          id: {
+            type: Number,
+            required: true,
+          },
+          role: {
+            type: String,
+          },
+          canEdit: {
+            type: Boolean,
+            default: false,
+          },
+        },
+      ],
+      default: [],
+    },
   },
   {
     timestamps: true,

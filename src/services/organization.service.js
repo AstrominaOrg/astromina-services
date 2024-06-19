@@ -68,10 +68,37 @@ const deleteOrganizationById = async (organizationId) => {
   return organization;
 };
 
+/**
+ * Update organization members
+ * @param {ObjectId} organizationId
+ * @param {Array} members
+ */
+const updateOrganizationMembers = async (organizationId, members) => {
+  const organization = await getOrganizationByOrgId(organizationId);
+
+  if (!organization) {
+    throw new ApiError(httpStatus.NOT_FOUND, 'Organization not found');
+  }
+
+  organization.members = members.map((member) => ({
+    login: member.login,
+    id: member.id,
+    role: member.role,
+    canEdit:
+      organization.members && organization.members.find((m) => m.id === member.id)
+        ? organization.members.find((m) => m.id === member.id).canEdit
+        : false,
+  }));
+
+  await organization.save();
+  return organization;
+};
+
 module.exports = {
   createOrganization,
   queryOrganizations,
   getOrganizationById,
+  updateOrganizationMembers,
   getOrganizationByOrgId,
   updateOrganizationById,
   deleteOrganizationById,

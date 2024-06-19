@@ -29,6 +29,11 @@ const repositorySchema = new mongoose.Schema(
       type: String,
       default: '',
     },
+    private: {
+      type: Boolean,
+      default: false,
+      required: true,
+    },
     avatar_url: {
       type: String,
     },
@@ -37,6 +42,14 @@ const repositorySchema = new mongoose.Schema(
       enum: ['pending', 'accepted', 'rejected', 'deleted'],
       required: true,
       default: 'pending',
+    },
+    stars: {
+      type: Number,
+      default: 0,
+    },
+    forks: {
+      type: Number,
+      default: 0,
     },
   },
   {
