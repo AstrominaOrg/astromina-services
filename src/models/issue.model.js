@@ -37,12 +37,23 @@ const issueSchema = new mongoose.Schema(
       required: true,
     },
     creator: {
-      type: String,
+      login: {
+        type: String,
+        required: true,
+      },
+      id: {
+        type: Number,
+        required: true,
+      },
     },
     state: {
       type: String,
       enum: ['open', 'closed'],
       required: true,
+    },
+    solved: {
+      type: Boolean,
+      default: false,
     },
     price: {
       type: Number,

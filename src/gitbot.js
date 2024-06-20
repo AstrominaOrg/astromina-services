@@ -101,4 +101,8 @@ module.exports = (app) => {
   app.on(['pull_request.opened', 'pull_request.reopened', 'pull_request.edited'], async (context) => {
     PullRequestEventService.handlePullRequestCreate(context);
   });
+
+  app.on('pull_request.closed', async (context) => {
+    PullRequestEventService.handlePullRequestClose(context);
+  });
 };

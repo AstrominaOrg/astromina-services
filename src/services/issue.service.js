@@ -43,6 +43,15 @@ async function getIssueByIssueId(issueId) {
 }
 
 /**
+ * @param {String} issueNumber
+ * @param {String} repositoryId
+ * @returns {Promise<Issue>}
+ */
+async function getIssueByIssueNumberAndRepositoryId(issueNumber, repositoryId) {
+  return Issue.findOne({ number: issueNumber, repositoryId });
+}
+
+/**
  * Update issue by id
  * @param {ObjectId} issueId
  * @param {Object} updateBody
@@ -89,6 +98,7 @@ module.exports = {
   createIssue,
   queryIssues,
   getIssueById,
+  getIssueByIssueNumberAndRepositoryId,
   getIssueByIssueId,
   updateIssueByIssueId,
   deleteIssueByIssueId,

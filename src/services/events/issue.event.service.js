@@ -5,11 +5,6 @@ const dcbot = require('../../dcbot');
 const config = require('../../config/config');
 const { wrapHandlerWithCheck } = require('./helper');
 
-async function sendComment(context, message) {
-  const params = context.issue({ body: message });
-  return context.octokit.issues.createComment(params);
-}
-
 async function handleIssueCreate(context) {
   const { issue, repository } = context.payload;
 
@@ -25,19 +20,34 @@ async function handleIssueCreate(context) {
       };
     }),
     repositoryId: repository.id,
-    creator: issue.user.login,
+    creator: {
+      login: issue.user.login,
+      id: issue.user.id,
+    },
     labels: issue.labels.map((label) => label.name),
     state: issue.state,
   });
 }
 
 async function handleIssueChange(context) {
-  const { issue } = context.payload;
+  const { issue, repository } = context.payload;
 
   await createOrUpdateIssue({
     issueId: issue.id,
+    number: issue.number,
     title: issue.title,
     description: issue.body,
+    assignees: issue.assignees.map((assignee) => {
+      return {
+        login: assignee.login,
+        id: assignee.id,
+      };
+    }),
+    repositoryId: repository.id,
+    creator: {
+      login: issue.user.login,
+      id: issue.user.id,
+    },
     labels: issue.labels.map((label) => label.name),
     state: issue.state,
   });
@@ -58,7 +68,10 @@ async function handleAssigned(context) {
       };
     }),
     repositoryId: repository.id,
-    creator: issue.user.login,
+    creator: {
+      login: issue.user.login,
+      id: issue.user.id,
+    },
     labels: issue.labels.map((label) => label.name),
     state: issue.state,
   });
@@ -67,6 +80,17 @@ async function handleAssigned(context) {
 
   if (user && user.discord && user.discord.id !== null) {
     const discordId = user.discord.id;
+    const userDB = await getIssueByIssueId(issue.id);
+
+    if (userDB && userDB.thread && userDB.thread.id) {
+      await addThreadMember({ client: dcbot, threadId: userDB.thread.id, userId: discordId });
+    }
+  }
+
+  const creator = await getUserByGithubId(issue.user.id);
+
+  if (creator && creator.discord && creator.discord.id !== null) {
+    const discordId = creator.discord.id;
     const userDB = await getIssueByIssueId(issue.id);
 
     if (userDB && userDB.thread && userDB.thread.id) {
@@ -118,8 +142,8 @@ async function handlePriceCommand(context) {
   const sender = context.payload.sender.login;
   const issue = await getIssueByIssueId(issueId);
 
-  if (issue.creator !== sender) {
-    await sendComment(context, 'You are not allowed to update the price');
+  if (issue.creator.login !== sender) {
+    // await sendComment(context, 'You are not allowed to update the price');
     return;
   }
 
