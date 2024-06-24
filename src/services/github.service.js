@@ -1,5 +1,9 @@
 const config = require('../config/config');
 const logger = require('../config/logger');
+const { createOrUpdateIssue } = require('./issue.service');
+const fs = require('fs');
+const { createRepository, createOrUpdateRepository } = require('./repository.service');
+const { createOrUpdatePullRequest } = require('./pr.service');
 
 const linkedIssuesQuery = `
 query getLinkedIssues(
@@ -104,6 +108,160 @@ const getOrganizationMembers = async (org) => {
     return roles;
   } catch (error) {
     logger.error('Error fetching organization members:', error);
+    throw error;
+  }
+};
+
+const getOrganizationRepos = async (org) => {
+  if (!octokitInstance) {
+    await initializeOctokit();
+  }
+
+  try {
+    const reposData = await octokitInstance.rest.repos.listForOrg({
+      org,
+    });
+
+    return reposData.data.map((repo) => repo);
+  } catch (error) {
+    logger.error('Error fetching organization repos:', error);
+    throw error;
+  }
+};
+
+const getRepositoryIssues = async (owner, repo) => {
+  if (!octokitInstance) {
+    await initializeOctokit();
+  }
+
+  try {
+    const allIssueData = await octokitInstance.paginate(`GET /repos/${owner}/${repo}/issues`, {
+      owner,
+      repo,
+      state: 'all',
+    });
+
+    return allIssueData.filter((issue) => !issue.pull_request);
+  } catch (error) {
+    logger.error('Error fetching repository issues:', error);
+    throw error;
+  }
+};
+
+const getRepositoryPullRequests = async (owner, repo) => {
+  if (!octokitInstance) {
+    await initializeOctokit();
+  }
+
+  try {
+    const allPrData = await octokitInstance.paginate(`GET /repos/${owner}/${repo}/pulls`, {
+      owner,
+      repo,
+      state: 'all',
+    });
+
+    return allPrData;
+  } catch (error) {
+    logger.error('Error fetching repository pull requests:', error);
+    throw error;
+  }
+};
+
+/** Recover the issues, pull requests of a organization
+ * @param {string} org - The name of the organization.
+ * @returns {Promise<Void>}
+ */
+const recoverOrganization = async (name) => {
+  const repos = await getOrganizationRepos(name);
+  repos.forEach((repo) => {
+    getRepositoryIssues(name, repo.name).then((issues) => {
+      issues.forEach((issue) => {
+        createOrUpdateIssue({
+          issueId: issue.id,
+          number: issue.number,
+          title: issue.title,
+          description: issue.body,
+          assignees: issue.assignees.map((assignee) => {
+            return {
+              login: assignee.login,
+              id: assignee.id,
+            };
+          }),
+          repositoryId: repo.id,
+          creator: {
+            login: issue.user.login,
+            id: issue.user.id,
+          },
+          labels: issue.labels.map((label) => label.name),
+          state: issue.state,
+        });
+      });
+    });
+
+    getRepositoryPullRequests(name, repo.name).then((prs) => {
+      prs.forEach((pullRequest) => {
+        getLinkedIssues(repo.name, repo.owner.login, pullRequest.number, 5).then((linkedIssues) => {
+          createOrUpdatePullRequest({
+            pullRequestId: pullRequest.id,
+            number: pullRequest.number,
+            title: pullRequest.title,
+            body: pullRequest.body,
+            repositoryId: repo.id,
+            assignees: pullRequest.assignees.map((assignee) => assignee.login),
+            requestedReviewers: pullRequest.requested_reviewers.map((reviewer) => reviewer.login),
+            linkedIssues: linkedIssues.repository.pullRequest.closingIssuesReferences.nodes.map((issue) => issue.number),
+            state: pullRequest.state,
+            labels: pullRequest.labels.map((label) => label.name),
+            creator: pullRequest.user.login,
+            merged: pullRequest.merged,
+            commits: pullRequest.commits,
+            additions: pullRequest.additions,
+            deletions: pullRequest.deletions,
+            changedFiles: pullRequest.changed_files,
+            comments: pullRequest.comments,
+            reviewComments: pullRequest.review_comments,
+            maintainerCanModify: pullRequest.maintainer_can_modify,
+            mergeable: pullRequest.mergeable,
+            authorAssociation: pullRequest.author_association,
+            draft: pullRequest.draft,
+          });
+        })
+      });
+    });
+
+    createOrUpdateRepository({
+      repositoryId: repo.id,
+      name: repo.name,
+      description: repo.description,
+      stars: repo.stargazers_count,
+      forks: repo.forks_count,
+      full_name: repo.full_name,
+      owner: repo.owner.login,
+      type: repo.owner.type,
+      private: repo.private,
+      state: 'pending',
+    });
+  });
+};
+
+/**
+ * Fetches the organization.
+ * @param {string} org - The name of the organization.
+ * @returns {Promise<Object>} The organization.
+ */
+const getOrganization = async (org) => {
+  if (!octokitInstance) {
+    await initializeOctokit();
+  }
+
+  try {
+    const issuesData = await octokitInstance.rest.orgs.get({
+      org,
+    });
+
+    return issuesData;
+  } catch (error) {
+    logger.error('Error fetching organization:', error);
     throw error;
   }
 };
