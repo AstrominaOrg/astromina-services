@@ -25,16 +25,7 @@ const queryOrganizations = async (filter, options) => {
   return organizations;
 };
 
-/**
- * Get organization by id
- * @param {ObjectId} id
- * @returns {Promise<Organization>}
- */
-const getOrganizationById = async (id) => {
-  return Organization.findById(id);
-};
-
-async function getOrganizationByOrgId(organizationId) {
+async function getOrganization(organizationId) {
   return Organization.findOne({ organizationId });
 }
 
@@ -45,7 +36,7 @@ async function getOrganizationByOrgId(organizationId) {
  * @returns {Promise<Organization>}
  */
 const updateOrganizationById = async (organizationId, updateBody) => {
-  const organization = await getOrganizationById(organizationId);
+  const organization = await getOrganization(organizationId);
   if (!organization) {
     throw new ApiError(httpStatus.NOT_FOUND, 'Organization not found');
   }
@@ -60,7 +51,7 @@ const updateOrganizationById = async (organizationId, updateBody) => {
  * @returns {Promise<Organization>}
  */
 const deleteOrganizationById = async (organizationId) => {
-  const organization = await getOrganizationById(organizationId);
+  const organization = await getOrganization(organizationId);
   if (!organization) {
     throw new ApiError(httpStatus.NOT_FOUND, 'Organization not found');
   }
@@ -74,7 +65,7 @@ const deleteOrganizationById = async (organizationId) => {
  * @param {Array} members
  */
 const updateOrganizationMembers = async (organizationId, members) => {
-  const organization = await getOrganizationByOrgId(organizationId);
+  const organization = await getOrganization(organizationId);
 
   if (!organization) {
     throw new ApiError(httpStatus.NOT_FOUND, 'Organization not found');
@@ -97,9 +88,8 @@ const updateOrganizationMembers = async (organizationId, members) => {
 module.exports = {
   createOrganization,
   queryOrganizations,
-  getOrganizationById,
   updateOrganizationMembers,
-  getOrganizationByOrgId,
+  getOrganization,
   updateOrganizationById,
   deleteOrganizationById,
 };

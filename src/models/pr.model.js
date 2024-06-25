@@ -4,7 +4,7 @@ const { toJSON } = require('./plugins');
 const pullRequestScheme = new mongoose.Schema(
   {
     pullRequestId: {
-      type: Number,
+      type: String,
       required: true,
       unique: true,
     },
@@ -20,7 +20,7 @@ const pullRequestScheme = new mongoose.Schema(
       type: String,
     },
     repositoryId: {
-      type: Number,
+      type: String,
       required: true,
     },
     assignees: {

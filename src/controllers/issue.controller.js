@@ -41,7 +41,7 @@ const getIssues = catchAsync(async (req, res) => {
 });
 
 const getIssue = catchAsync(async (req, res) => {
-  const issue = await issueService.getIssueByIssueId(req.params.issueId);
+  const issue = await issueService.getIssue(req.params.issueId);
   if (!issue) {
     throw new ApiError(httpStatus.NOT_FOUND, 'Issue not found');
   }

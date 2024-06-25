@@ -4,7 +4,7 @@ const { toJSON } = require('./plugins');
 const organizationSchema = new mongoose.Schema(
   {
     organizationId: {
-      type: Number,
+      type: String,
       required: true,
       unique: true,
     },
@@ -31,7 +31,7 @@ const organizationSchema = new mongoose.Schema(
             required: true,
           },
           id: {
-            type: Number,
+            type: String,
             required: true,
           },
           role: {

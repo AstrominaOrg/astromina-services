@@ -10,11 +10,11 @@ async function handlePullRequestCreate(context) {
   const linkedIssues = await getLinkedIssues(repository.name, repository.owner.login, pullRequest.number, 5);
 
   await createOrUpdatePullRequest({
-    pullRequestId: pullRequest.id,
+    pullRequestId: pullRequest.node_id,
     number: pullRequest.number,
     title: pullRequest.title,
     body: pullRequest.body,
-    repositoryId: repository.id,
+    repositoryId: repository.node_id,
     assignees: pullRequest.assignees.map((assignee) => assignee.login),
     requestedReviewers: pullRequest.requested_reviewers.map((reviewer) => reviewer.login),
     linkedIssues: linkedIssues.repository.pullRequest.closingIssuesReferences.nodes.map((issue) => issue.number),
@@ -45,7 +45,7 @@ async function handlePullRequestClose(context) {
 
   if (pullRequest.merged) {
     linkedIssues.repository.pullRequest.closingIssuesReferences.nodes.forEach(async (issue) => {
-      const issueDB = await getIssueByIssueNumberAndRepositoryId(issue.number, repository.id);
+      const issueDB = await getIssueByIssueNumberAndRepositoryId(issue.number, repository.node_id);
       if (issueDB) {
         await createOrUpdateIssue({
           issueId: issueDB.issueId,
@@ -66,10 +66,10 @@ async function handlePullRequestClose(context) {
   }
 
   await createOrUpdatePullRequest({
-    pullRequestId: pullRequest.id,
+    pullRequestId: pullRequest.node_id,
     title: pullRequest.title,
     body: pullRequest.body,
-    repositoryId: repository.id,
+    repositoryId: repository.node_id,
     assignees: pullRequest.assignees.map((assignee) => assignee.login),
     requestedReviewers: pullRequest.requested_reviewers.map((reviewer) => reviewer.login),
     linkedIssues: linkedIssues.repository.pullRequest.closingIssuesReferences.nodes.map((issue) => issue.number),

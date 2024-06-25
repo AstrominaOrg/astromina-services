@@ -17,7 +17,7 @@ const getOrganizations = catchAsync(async (req, res) => {
 });
 
 const getOrganization = catchAsync(async (req, res) => {
-  const organization = await organizationService.getOrganizationById(req.params.organizationId);
+  const organization = await organizationService.getOrganization(req.params.organizationId);
   if (!organization) {
     throw new ApiError(httpStatus.NOT_FOUND, 'Organization not found');
   }

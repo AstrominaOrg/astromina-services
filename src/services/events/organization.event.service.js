@@ -6,7 +6,7 @@ async function handleMemberChange(context) {
 
   const members = await getOrganizationMembers(organization.login);
 
-  await updateOrganizationMembers(organization.id, members);
+  await updateOrganizationMembers(organization.node_id, members);
 }
 
 module.exports = {

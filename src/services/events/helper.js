@@ -1,9 +1,9 @@
-const { getOrganizationByOrgId } = require('../organization.service');
+const { getOrganization } = require('../organization.service');
 const { getRepositoryById } = require('../repository.service');
 
 async function checkOrganizationAndRepository(context) {
   if (context.payload.repository.owner.type !== 'Organization') {
-    const repositoryId = context.payload.repository.id;
+    const repositoryId = context.payload.repository.node_id;
     const repository = await getRepositoryById(repositoryId);
 
     if (!repository || repository.state !== 'accepted') {
@@ -12,9 +12,9 @@ async function checkOrganizationAndRepository(context) {
 
     return true;
   }
-  const organizationId = context.payload.organization.id;
+  const organizationId = context.payload.organization.node_id;
 
-  const organization = await getOrganizationByOrgId(organizationId);
+  const organization = await getOrganization(organizationId);
 
   if (!organization || organization.state !== 'accepted') {
     return false;

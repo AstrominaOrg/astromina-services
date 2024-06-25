@@ -5,7 +5,7 @@ async function handleRepositoryAdd(context) {
   const { repository, installation } = context.payload;
 
   await createOrUpdateRepository({
-    repositoryId: repository.id,
+    repositoryId: repository.node_id,
     name: repository.name,
     full_name: repository.full_name,
     owner: installation.account.login,
@@ -19,7 +19,7 @@ async function handleRepositoryRemove(context) {
   const { repository, installation } = context.payload;
 
   await createOrUpdateRepository({
-    repositoryId: repository.id,
+    repositoryId: repository.node_id,
     name: repository.name,
     full_name: repository.full_name,
     owner: installation.account.login,
@@ -32,7 +32,7 @@ async function handleRepositoryRemove(context) {
 const handleStar = async (context) => {
   const { repository } = context.payload;
 
-  await updateRepositoryByRepoId(repository.id, {
+  await updateRepositoryByRepoId(repository.node_id, {
     stars: repository.stargazers_count,
   });
 };

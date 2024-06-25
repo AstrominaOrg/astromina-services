@@ -4,7 +4,7 @@ const { toJSON, paginate } = require('./plugins');
 const repositorySchema = new mongoose.Schema(
   {
     repositoryId: {
-      type: Number,
+      type: String,
       required: true,
       unique: true,
     },

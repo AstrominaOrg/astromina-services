@@ -1,4 +1,4 @@
-const { createOrUpdateIssue, getIssueByIssueId, updateIssueByIssueId, deleteIssueByIssueId } = require('../issue.service');
+const { createOrUpdateIssue, updateIssueByIssueId, deleteIssueByIssueId, getIssue } = require('../issue.service');
 const { createPrivateThread, addThreadMember, removeThreadMember, sendThreadMessage } = require('../discord.service');
 const { getUserByGithubId } = require('../user.service');
 const dcbot = require('../../dcbot');
@@ -9,7 +9,7 @@ async function handleIssueCreate(context) {
   const { issue, repository } = context.payload;
 
   await createOrUpdateIssue({
-    issueId: issue.id,
+    issueId: issue.node_id,
     number: issue.number,
     title: issue.title,
     description: issue.body,
@@ -19,7 +19,7 @@ async function handleIssueCreate(context) {
         id: assignee.id,
       };
     }),
-    repositoryId: repository.id,
+    repositoryId: repository.node_id,
     creator: {
       login: issue.user.login,
       id: issue.user.id,
@@ -33,7 +33,7 @@ async function handleIssueChange(context) {
   const { issue, repository } = context.payload;
 
   await createOrUpdateIssue({
-    issueId: issue.id,
+    issueId: issue.node_id,
     number: issue.number,
     title: issue.title,
     description: issue.body,
@@ -43,7 +43,7 @@ async function handleIssueChange(context) {
         id: assignee.id,
       };
     }),
-    repositoryId: repository.id,
+    repositoryId: repository.node_id,
     creator: {
       login: issue.user.login,
       id: issue.user.id,
@@ -57,7 +57,7 @@ async function handleAssigned(context) {
   const { issue, assignee, repository } = context.payload;
 
   await createOrUpdateIssue({
-    issueId: issue.id,
+    issueId: issue.node_id,
     number: issue.number,
     title: issue.title,
     description: issue.body,
@@ -67,7 +67,7 @@ async function handleAssigned(context) {
         id: dev.id,
       };
     }),
-    repositoryId: repository.id,
+    repositoryId: repository.node_id,
     creator: {
       login: issue.user.login,
       id: issue.user.id,
@@ -80,7 +80,7 @@ async function handleAssigned(context) {
 
   if (user && user.discord && user.discord.id !== null) {
     const discordId = user.discord.id;
-    const userDB = await getIssueByIssueId(issue.id);
+    const userDB = await getIssue(issue.node_id);
 
     if (userDB && userDB.thread && userDB.thread.id) {
       await addThreadMember({ client: dcbot, threadId: userDB.thread.id, userId: discordId });
@@ -91,7 +91,7 @@ async function handleAssigned(context) {
 
   if (creator && creator.discord && creator.discord.id !== null) {
     const discordId = creator.discord.id;
-    const userDB = await getIssueByIssueId(issue.id);
+    const userDB = await getIssue(issue.node_id);
 
     if (userDB && userDB.thread && userDB.thread.id) {
       await addThreadMember({ client: dcbot, threadId: userDB.thread.id, userId: discordId });
@@ -106,14 +106,14 @@ async function handleUnassigned(context) {
 
   if (user && user.discord && user.discord.id) {
     const discordId = user.discord.id;
-    const userDB = await getIssueByIssueId(issue.id);
+    const userDB = await getIssue(issue.node_id);
 
     if (userDB && userDB.thread && userDB.thread.id) {
       await removeThreadMember({ client: dcbot, threadId: userDB.thread.id, userId: discordId });
     }
 
     await createOrUpdateIssue({
-      issueId: issue.id,
+      issueId: issue.node_id,
       assignees: issue.assignees.map((dev) => {
         return {
           login: dev.login,
@@ -126,9 +126,8 @@ async function handleUnassigned(context) {
 
 async function handleIssueTransfer(context) {
   const { issue } = context.payload;
-  const issueId = issue.id;
 
-  await deleteIssueByIssueId(issueId);
+  await deleteIssueByIssueId(issue.node_id);
 }
 
 async function handlePriceCommand(context) {
@@ -138,9 +137,9 @@ async function handlePriceCommand(context) {
     return;
   }
   const price = comment.body.split(' ')[1];
-  const issueId = context.payload.issue.id;
+  const issueId = context.payload.issue.node_id;
   const sender = context.payload.sender.login;
-  const issue = await getIssueByIssueId(issueId);
+  const issue = await getIssue(issueId);
 
   if (issue.creator.login !== sender) {
     // await sendComment(context, 'You are not allowed to update the price');
@@ -149,7 +148,7 @@ async function handlePriceCommand(context) {
 
   await updateIssueByIssueId(issueId, { price });
   // await sendComment(context, `Price has been updated to $${price}`);
-  const userDB = await getIssueByIssueId(issueId);
+  const userDB = await getIssue(issueId);
   let thread;
 
   if (userDB && userDB.thread && userDB.thread.id) {

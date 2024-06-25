@@ -38,7 +38,7 @@ const getIssueById = async (id) => {
  * @param {String} issueId
  * @returns {Promise<Issue>}
  */
-async function getIssueByIssueId(issueId) {
+async function getIssue(issueId) {
   return Issue.findOne({ issueId });
 }
 
@@ -58,7 +58,7 @@ async function getIssueByIssueNumberAndRepositoryId(issueNumber, repositoryId) {
  * @returns {Promise<Issue>}
  */
 const updateIssueByIssueId = async (issueId, updateBody) => {
-  const issue = await getIssueByIssueId(issueId);
+  const issue = await getIssue(issueId);
   if (!issue) {
     throw new ApiError(httpStatus.NOT_FOUND, 'Issue not found');
   }
@@ -73,7 +73,7 @@ const updateIssueByIssueId = async (issueId, updateBody) => {
  * @returns {Promise<Issue>}
  */
 const deleteIssueByIssueId = async (issueId) => {
-  const issue = await getIssueByIssueId(issueId);
+  const issue = await getIssue(issueId);
   if (!issue) {
     throw new ApiError(httpStatus.NOT_FOUND, 'Issue not found');
   }
@@ -87,7 +87,7 @@ const deleteIssueByIssueId = async (issueId) => {
  * @returns {Promise<Issue>}
  */
 async function createOrUpdateIssue(issueBody) {
-  const issue = await getIssueByIssueId(issueBody.issueId);
+  const issue = await getIssue(issueBody.issueId);
   if (issue) {
     return updateIssueByIssueId(issueBody.issueId, issueBody);
   }
@@ -99,7 +99,7 @@ module.exports = {
   queryIssues,
   getIssueById,
   getIssueByIssueNumberAndRepositoryId,
-  getIssueByIssueId,
+  getIssue,
   updateIssueByIssueId,
   deleteIssueByIssueId,
   createOrUpdateIssue,
