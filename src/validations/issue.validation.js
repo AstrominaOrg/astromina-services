@@ -14,19 +14,26 @@ const createIssue = {
 
 const getIssues = {
   query: Joi.object().keys({
+    issueId: Joi.number().integer(),
+    number: Joi.number().integer(),
     title: Joi.string(),
+    description: Joi.string(),
+    repositoryId: Joi.number().integer(),
+    creatorLogin: Joi.string(),
     state: Joi.string().valid('open', 'closed'),
+    solved: Joi.boolean(),
+    priceMin: Joi.number().integer().min(0),
+    priceMax: Joi.number().integer().min(0),
+    labels: Joi.string(),
     sortBy: Joi.string(),
     limit: Joi.number().integer(),
     page: Joi.number().integer(),
-    token: Joi.string().required(),
   }),
 };
 
 const getIssue = {
   params: Joi.object().keys({
-    issueId: Joi.string().custom(objectId),
-    token: Joi.string().required(),
+    issueId: Joi.number().integer().required(),
   }),
 };
 

@@ -11,15 +11,37 @@ const createIssue = catchAsync(async (req, res) => {
 });
 
 const getIssues = catchAsync(async (req, res) => {
-  const filter = pick(req.query, ['title', 'state']);
+  const filter = pick(req.query, [
+    'issueId',
+    'number',
+    'title',
+    'description',
+    'repositoryId',
+    'creatorLogin',
+    'state',
+    'solved',
+    'labels',
+  ]);
+
+  if (req.query.priceMin !== undefined || req.query.priceMax !== undefined) {
+    filter.price = {};
+    if (req.query.priceMin !== undefined) {
+      filter.price.$gte = parseInt(req.query.priceMin, 10);
+    }
+    if (req.query.priceMax !== undefined) {
+      filter.price.$lte = parseInt(req.query.priceMax, 10);
+    }
+  }
+
   const options = pick(req.query, ['sortBy', 'limit', 'page']);
   const result = await issueService.queryIssues(filter, options);
+
   await set(req.originalUrl, result, 60);
   res.send(result);
 });
 
 const getIssue = catchAsync(async (req, res) => {
-  const issue = await issueService.getIssueById(req.params.issueId);
+  const issue = await issueService.getIssueByIssueId(req.params.issueId);
   if (!issue) {
     throw new ApiError(httpStatus.NOT_FOUND, 'Issue not found');
   }

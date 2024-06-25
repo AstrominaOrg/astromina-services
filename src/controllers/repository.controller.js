@@ -1,73 +1,43 @@
 const httpStatus = require('http-status');
-const { Repository } = require('../models');
+const pick = require('../utils/pick');
 const ApiError = require('../utils/ApiError');
+const catchAsync = require('../utils/catchAsync');
+const { repositoryService } = require('../services');
 
-/**
- * Create a repository
- * @param {Object} repositoryBody
- * @returns {Promise<Repository>}
- */
-const createRepository = async (repositoryBody) => {
-  return Repository.create(repositoryBody);
-};
+const createRepository = catchAsync(async (req, res) => {
+  const repository = await repositoryService.createRepository(req.body);
+  res.status(httpStatus.CREATED).send(repository);
+});
 
-/**
- * Query for repositories
- * @param {Object} filter - Mongo filter
- * @param {Object} options - Query options
- * @param {string} [options.sortBy] - Sort option in the format: sortField:(desc|asc)
- * @param {number} [options.limit] - Maximum number of results per page (default = 10)
- * @param {number} [options.page] - Current page (default = 1)
- * @returns {Promise<QueryResult>}
- */
-const queryRepositories = async (filter, options) => {
-  const repositories = await Repository.paginate(filter, options);
-  return repositories;
-};
+const getRepositories = catchAsync(async (req, res) => {
+  const filter = pick(req.query, ['name', 'full_name', 'owner', 'type', 'private', 'state']);
+  const options = pick(req.query, ['sortBy', 'limit', 'page']);
+  const result = await repositoryService.queryRepositories(filter, options);
+  res.send(result);
+});
 
-/**
- * Get repository by id
- * @param {ObjectId} id
- * @returns {Promise<Repository>}
- */
-const getRepositoryById = async (id) => {
-  return Repository.findById(id);
-};
-
-/**
- * Update repository by id
- * @param {ObjectId} repositoryId
- * @param {Object} updateBody
- * @returns {Promise<Repository>}
- */
-const updateRepositoryById = async (repositoryId, updateBody) => {
-  const repository = await getRepositoryById(repositoryId);
+const getRepository = catchAsync(async (req, res) => {
+  const repository = await repositoryService.getRepositoryByRepoId(req.params.repositoryId);
   if (!repository) {
     throw new ApiError(httpStatus.NOT_FOUND, 'Repository not found');
   }
-  Object.assign(repository, updateBody);
-  await repository.save();
-  return repository;
-};
+  res.send(repository);
+});
 
-/**
- * Delete repository by id
- * @param {ObjectId} repositoryId
- * @returns {Promise<Repository>}
- */
-const deleteRepositoryById = async (repositoryId) => {
-  const repository = await getRepositoryById(repositoryId);
-  if (!repository) {
-    throw new ApiError(httpStatus.NOT_FOUND, 'Repository not found');
-  }
-  await repository.remove();
-  return repository;
-};
+const updateRepository = catchAsync(async (req, res) => {
+  const repository = await repositoryService.updateRepositoryById(req.params.repositoryId, req.body);
+  res.send(repository);
+});
+
+const deleteRepository = catchAsync(async (req, res) => {
+  await repositoryService.deleteRepositoryById(req.params.repositoryId);
+  res.status(httpStatus.NO_CONTENT).send();
+});
 
 module.exports = {
   createRepository,
-  queryRepositories,
-  getRepositoryById,
-  updateRepositoryById,
-  deleteRepositoryById,
+  getRepositories,
+  getRepository,
+  updateRepository,
+  deleteRepository,
 };

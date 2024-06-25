@@ -9,12 +9,12 @@ const router = express.Router();
 
 router
   .route('/')
-  .post(auth('manageIssues'), validate(issueValidation.createIssue), issueController.createIssue)
-  .get(auth('getIssues'), validate(issueValidation.getIssues), cache, issueController.getIssues);
+  .get(validate(issueValidation.getIssues), cache, issueController.getIssues)
+  .post(auth('manageIssues'), validate(issueValidation.createIssue), issueController.createIssue);
 
 router
   .route('/:issueId')
-  .get(auth('getIssues'), validate(issueValidation.getIssue), issueController.getIssue)
+  .get(validate(issueValidation.getIssue), issueController.getIssue)
   .patch(auth('manageIssues'), validate(issueValidation.updateIssue), issueController.updateIssue)
   .delete(auth('manageIssues'), validate(issueValidation.deleteIssue), issueController.deleteIssue);
 

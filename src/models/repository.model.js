@@ -1,5 +1,5 @@
 const mongoose = require('mongoose');
-const { toJSON } = require('./plugins');
+const { toJSON, paginate } = require('./plugins');
 
 const repositorySchema = new mongoose.Schema(
   {
@@ -58,6 +58,7 @@ const repositorySchema = new mongoose.Schema(
 );
 
 repositorySchema.plugin(toJSON);
+repositorySchema.plugin(paginate);
 
 /**
  * @typedef Repository
