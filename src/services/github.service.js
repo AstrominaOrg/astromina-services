@@ -27,12 +27,13 @@ query getLinkedIssues(
 `;
 
 const getIssuesAndCommentsQuery = `
-query ($org: String!, $repo: String!, $issuesFirst: Int!, $commentsFirst: Int!) {
+query ($org: String!, $repo: String!, $issuesFirst: Int!, $commentsFirst: Int!, $issuesAfter: String, $commentsAfter: String) {
   repository(owner: $org, name: $repo) {
-    issues(first: $issuesFirst, states: [OPEN, CLOSED]) {
+    issues(first: $issuesFirst, after: $issuesAfter, states: [OPEN, CLOSED]) {
       nodes {
         id
         number
+        url
         title
         body
         state
@@ -41,7 +42,7 @@ query ($org: String!, $repo: String!, $issuesFirst: Int!, $commentsFirst: Int!) 
             name
           }
         }
-        comments(first: $commentsFirst) {
+        comments(first: $commentsFirst, after: $commentsAfter) {
           nodes {
             body
             id
@@ -57,30 +58,32 @@ query ($org: String!, $repo: String!, $issuesFirst: Int!, $commentsFirst: Int!) 
           login
         }
       }
+      pageInfo {
+        endCursor
+        hasNextPage
+      }
     }
   }
-}`;
+}
+`;
 
 const pullRequestsQuery = `
-query ($org: String!, $repo: String!) {
+query ($org: String!, $repo: String!, $pullRequestsFirst: Int!, $pullRequestsAfter: String) {
   repository(owner: $org, name: $repo) {
-    pullRequests(first: 100, states: [OPEN, MERGED, CLOSED]) {
+    pullRequests(first: $pullRequestsFirst, after: $pullRequestsAfter, states: [OPEN, MERGED, CLOSED]) {
       nodes {
         id
         number
         title
         body
         merged
-        additions
-        deletions
         commits {
           totalCount
         }
-        changedFiles
         comments {
           totalCount
         }
-        reviewThreads(first: 5) {
+        reviewThreads {
           totalCount
         }
         maintainerCanModify
@@ -93,7 +96,7 @@ query ($org: String!, $repo: String!) {
             id
           }
         }
-        reviewRequests(first: 10) {
+        reviewRequests(first: 5) {
           nodes {
             requestedReviewer {
               ... on User {
@@ -119,12 +122,65 @@ query ($org: String!, $repo: String!) {
           }
         }
       }
+      pageInfo {
+        endCursor
+        hasNextPage
+      }
+    }
+  }
+}`;
+
+const organizationRepositoriesQuery = `
+query ($org: String!, $reposFirst: Int!, $reposAfter: String) {
+  organization(login: $org) {
+    repositories(first: $reposFirst, after: $reposAfter) {
+      nodes {
+        id
+        name
+        description
+        stargazerCount
+        forkCount
+        nameWithOwner
+        visibility
+        owner {
+          login
+        }
+      }
+      pageInfo {
+        endCursor
+        hasNextPage
+      }
+    }
+  }
+}`;
+
+const userRepositoriesQuery = `
+query ($user: String!, $reposFirst: Int!, $reposAfter: String) {
+  user(login: $user) {
+    repositories(first: $reposFirst, after: $reposAfter) {
+      nodes {
+        id
+        name
+        description
+        stargazerCount
+        forkCount
+        nameWithOwner
+        visibility
+        owner {
+          login
+        }
+      }
+      pageInfo {
+        endCursor
+        hasNextPage
+      }
     }
   }
 }`;
 
 let octokitInstance;
 
+let requestCount = 0;
 /**
  * Initializes the Octokit instance.
  */
@@ -138,6 +194,11 @@ const initializeOctokit = async () => {
 
   const installationId = config.github.appInstallationId;
   octokitInstance = await app.getInstallationOctokit(installationId);
+
+  octokitInstance.hook.before("request", async (options) => {
+    requestCount++;
+    options.headers['X-Github-Next-Global-ID'] = '1';
+  });
 };
 
 /**
@@ -175,85 +236,135 @@ const getRepositoryPullRequests = async (org, repo) => {
     await initializeOctokit();
   }
 
+  let allPullRequests = [];
+  let pullRequestsAfter = null;
+  let hasNextPage = true;
+
   try {
-    const {
-      repository: { pullRequests },
-    } = await octokitInstance.graphql(pullRequestsQuery, { org, repo });
-    return pullRequests.nodes.map((pr) => ({
-      ...pr,
-      labels: pr.labels.nodes.map((label) => label.name),
-      comments: pr.comments.totalCount,
-      reviewCommentsCount: pr.reviewThreads.totalCount, // Updated to use reviewThreads
-      linked_issues: pr.closingIssuesReferences.nodes.map((issue) => ({
-        number: issue.number,
-        title: issue.title,
-        state: issue.state,
-      })),
-      assignees: pr.assignees.nodes.map((assignee) => ({
-        login: assignee.login,
-        id: assignee.id,
-      })),
-      requested_reviewers: pr.reviewRequests.nodes.map((request) => request.requestedReviewer.login),
-      review_requests: pr.reviewRequests.nodes.map((request) => request.requestedReviewer.login),
-      commits: pr.commits.totalCount,
-      review_comments: pr.reviewThreads.totalCount,
-      draft: pr.isDraft,
-      changed_files: pr.changedFiles,
-      author_association: pr.authorAssociation,
-      user: {
-        login: pr.author.login,
-        id: pr.author.id,
-      },
-      state: pr.state === 'MERGED' ? 'closed' : pr.state,
-      merged: pr.merged,
-      mergeable: pr.mergeable === 'CLEAN' || pr.mergeable === 'MERGEABLE',
-      node_id: pr.id,
-    }));
+    while (hasNextPage) {
+      const pullRequestsData = await octokitInstance.graphql(pullRequestsQuery, { org, repo: repo.name, pullRequestsFirst: 100, pullRequestsAfter });
+      const pullRequests = pullRequestsData.repository.pullRequests;
+
+      allPullRequests = allPullRequests.concat(pullRequests.nodes);
+
+      pullRequestsAfter = pullRequests.pageInfo.endCursor;
+      hasNextPage = pullRequests.pageInfo.hasNextPage;
+    }
   } catch (error) {
-    logger.error('Error fetching PR details:', error);
+    logger.error(`Error fetching PR details org: ${org}, repo: ${repo.name}:`, error);
     throw error;
   }
+
+  allPullRequests.forEach(async (pr) => {
+    if (pr.author === null) {
+      pr.author = { login: 'ghost' };
+    }
+
+    const linked_issues = pr.closingIssuesReferences.nodes.map((issue) => issue.number);
+
+    if (pr.merged) {
+      linked_issues.forEach(async (issue) => {
+        const issueDB = await getIssueByIssueNumberAndRepositoryId(issue.number, repo.node_id);
+        if (issueDB) {
+          await createOrUpdateIssue({
+            issueId: issueDB.issueId,
+            solved: true,
+          });
+        }
+      });
+    }
+
+    if (pr.author === null) {
+      pr.author = { login: 'ghost' };
+    }
+
+
+    await createOrUpdatePullRequest({
+      pullRequestId: pr.id,
+      number: pr.number,
+      title: pr.title,
+      body: pr.body,
+      repositoryId: repo.id,
+      assignees: pr.assignees.nodes.map(assignee => assignee.login ? assignee.login : 'ghost'),
+      requestedReviewers: pr.reviewRequests.nodes.map(request => request.requestedReviewer?.login ? request.requestedReviewer.login : 'ghost'),
+      linkedIssues: pr.closingIssuesReferences.nodes.map(issue => issue.number),
+      state: pr.state === 'MERGED' ? 'closed' : pr.state.toLowerCase(),
+      labels: pr.labels.nodes.map(label => label.name),
+      creator: pr.author.login,
+      merged: pr.merged,
+      commits: pr.commits.totalCount,
+      additions: pr.additions,
+      deletions: pr.deletions,
+      changedFiles: pr.changedFiles,
+      comments: pr.comments.totalCount,
+      reviewComments: pr.reviewThreads.totalCount,
+      maintainerCanModify: pr.maintainerCanModify,
+      mergeable: pr.mergeable === 'CLEAN' || pr.mergeable === 'MERGEABLE',
+      authorAssociation: pr.authorAssociation,
+      draft: pr.isDraft,
+    });
+  });
 };
 
 const getRepositoryIssues = async (org, repo) => {
-  try {
-    const issuesData = await octokitInstance.graphql(getIssuesAndCommentsQuery, {
-      org: org,
-      repo: repo.name,
-      issuesFirst: 100,
-      commentsFirst: 10
-    });
+  if (!octokitInstance) {
+    await initializeOctokit();
+  }
 
-    const issues = issuesData.repository.issues.nodes;
-    issues.forEach(issue => {
-      price = 0;
-      issue.comments.nodes.forEach(comment => {
-        if (comment.body.includes('/price')) {
-          price = comment.body.split('/price')[1].trim();
-        }
+  let allIssues = [];
+  let issuesAfter = null;
+  let hasNextPage = true;
+
+  try {
+    while (hasNextPage) {
+      const issuesData = await octokitInstance.graphql(getIssuesAndCommentsQuery, {
+        org: org,
+        repo: repo.name,
+        issuesFirst: 100,
+        commentsFirst: 10,
+        issuesAfter: issuesAfter,
       });
-      createOrUpdateIssue({
-        issueId: issue.id,
-        number: issue.number,
-        title: issue.title,
-        description: issue.body,
-        assignees: issue.assignees.nodes.map(assignee => ({
-          login: assignee.login,
-          id: assignee.id
-        })),
-        repositoryId: repo.node_id,
-        creator: issue.author.login,
-        labels: issue.labels.nodes.map(label => label.name),
-        state: issue.state.toLowerCase(),
-        price: price,
-      })
-    });
+
+      const issues = issuesData.repository.issues.nodes;
+      allIssues = allIssues.concat(issues);
+
+      issuesAfter = issuesData.repository.issues.pageInfo.endCursor;
+      hasNextPage = issuesData.repository.issues.pageInfo.hasNextPage;
+    }
   } catch (error) {
     logger.error('Error fetching issues and comments:', error);
     throw error;
   }
-};
 
+  allIssues.forEach((issue) => {
+    price = 0;
+    issue.comments.nodes.forEach((comment) => {
+      if (comment.body.includes('/price')) {
+        price = comment.body.split('/price')[1].trim();
+      }
+    });
+    
+    if (issue.author === null) {
+      issue.author = { login: 'ghost' };
+    }
+
+    createOrUpdateIssue({
+      issueId: issue.id,
+      number: issue.number,
+      title: issue.title,
+      description: issue.body,
+      assignees: issue.assignees.nodes.map((assignee) => ({
+        login: assignee.login,
+        id: assignee.id,
+      })),
+      repositoryId: repo.id,
+      creator: issue.author.login,
+      labels: issue.labels.nodes.map((label) => label.name),
+      state: issue.state.toLowerCase(),
+      price: price,
+    });
+  });
+};
 
 /**
  * Fetches members of a GitHub organization.
@@ -299,82 +410,56 @@ const getOrganizationRepos = async (org) => {
     await initializeOctokit();
   }
 
+  let allRepos = [];
+  let reposAfter = null;
+  let hasNextPage = true;
+
   try {
-    const reposData = await octokitInstance.rest.repos.listForOrg({
+    const reposData = await octokitInstance.graphql(organizationRepositoriesQuery, {
       org,
+      reposFirst: 100,
+      reposAfter,
     });
 
-    return reposData.data.map((repo) => repo);
+    const repos = reposData.organization.repositories;
+    allRepos = allRepos.concat(repos.nodes);
+
+    reposAfter = repos.pageInfo.endCursor;
+    hasNextPage = repos.pageInfo.hasNextPage;
   } catch (error) {
     logger.error('Error fetching organization repos:', error);
     throw error;
   }
+
+  return allRepos;
 };
-
-
 
 /** Recover the issues, pull requests of a organization
  * @param {string} org - The name of the organization.
  * @returns {Promise<Void>}
  */
 const recoverOrganization = async (name) => {
-  const repos = await getOrganizationRepos(name);
+  let repos = await getOrganizationRepos(name);
+
   repos.forEach(async (repo) => {
-    await getRepositoryIssues(name, repo);
-
-    await getRepositoryPullRequests(name, repo.name).then((prs) => {
-      prs.forEach((pullRequest) => {
-        if (pullRequest.merged) {
-          pullRequest.linked_issues.forEach(async (issue) => {
-            const issueDB = await getIssueByIssueNumberAndRepositoryId(issue.number, repo.node_id);
-            if (issueDB) {
-              await createOrUpdateIssue({
-                issueId: issueDB.issueId,
-                solved: true,
-              });
-            }
-          });
-        }
-
-        createOrUpdatePullRequest({
-          pullRequestId: pullRequest.node_id,
-          number: pullRequest.number,
-          title: pullRequest.title,
-          body: pullRequest.body,
-          repositoryId: repo.node_id,
-          assignees: pullRequest.assignees.map((assignee) => assignee.login),
-          requestedReviewers: pullRequest.requested_reviewers.map((reviewer) => reviewer.login),
-          linkedIssues: pullRequest.linked_issues.map((issue) => issue.number),
-          state: pullRequest.state,
-          labels: pullRequest.labels.map((label) => label.name),
-          creator: pullRequest.user.login,
-          merged: pullRequest.merged,
-          commits: pullRequest.commits,
-          additions: pullRequest.additions,
-          deletions: pullRequest.deletions,
-          changedFiles: pullRequest.changed_files,
-          comments: pullRequest.comments,
-          reviewComments: pullRequest.review_comments,
-          maintainerCanModify: pullRequest.maintainer_can_modify,
-          mergeable: pullRequest.mergeable,
-          authorAssociation: pullRequest.author_association,
-          draft: pullRequest.draft,
-        });
-      });
-    });
-
     await createOrUpdateRepository({
-      repositoryId: repo.node_id,
+      repositoryId: repo.id,
       name: repo.name,
       description: repo.description,
-      stars: repo.stargazers_count,
-      forks: repo.forks_count,
-      full_name: repo.full_name,
+      stars: repo.stargazerCount,
+      forks: repo.forkCount,
+      full_name: repo.nameWithOwner,
       owner: repo.owner.login,
-      type: repo.owner.type,
-      private: repo.private,
+      type: 'Organization',
+      private: repo.visibility === 'PRIVATE',
       state: 'pending',
     });
+
+    await getRepositoryIssues(name, repo);
+
+    await getRepositoryPullRequests(name, repo);
+
+    logger.info(`Repository recovered: ${repo.name}`);
   });
 };
 
@@ -399,15 +484,8 @@ const getOrganization = async (org) => {
     throw error;
   }
 };
-// getRepositoryPullRequests('AstrominaOrg', 'abc')
-//   .then((prs) => {
-//     console.log(prs);
-//   })
-//   .catch((error) => {
-//     console.log(error);
-//   });
-recoverOrganization('AstrominaOrg');
 
+recoverOrganization('o1-labs');
 module.exports = {
   getLinkedIssues,
   getOrganizationMembers,
