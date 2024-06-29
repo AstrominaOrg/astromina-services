@@ -4,11 +4,6 @@ const ApiError = require('../utils/ApiError');
 const catchAsync = require('../utils/catchAsync');
 const { organizationService } = require('../services');
 
-const createOrganization = catchAsync(async (req, res) => {
-  const organization = await organizationService.createOrganization(req.body);
-  res.status(httpStatus.CREATED).send(organization);
-});
-
 const getOrganizations = catchAsync(async (req, res) => {
   const filter = pick(req.query, ['title', 'state']);
   const options = pick(req.query, ['sortBy', 'limit', 'page']);
@@ -24,20 +19,19 @@ const getOrganization = catchAsync(async (req, res) => {
   res.send(organization);
 });
 
-const updateOrganization = catchAsync(async (req, res) => {
-  const organization = await organizationService.updateOrganizationById(req.params.organizationId, req.body);
-  res.send(organization);
+const getTopContributors = catchAsync(async (req, res) => {
+  const result = await organizationService.getTopContributors(req.params.organizationId);
+  res.send(result);
 });
 
-const deleteOrganization = catchAsync(async (req, res) => {
-  await organizationService.deleteOrganizationById(req.params.organizationId);
-  res.status(httpStatus.NO_CONTENT).send();
+const getBountyTotals = catchAsync(async (req, res) => {
+  const { totalRewarded, totalActive } = await organizationService.getBountyTotals(req.params.organizationId);
+  res.send({ totalRewarded, totalActive });
 });
 
 module.exports = {
-  createOrganization,
+  getTopContributors,
+  getBountyTotals,
   getOrganizations,
   getOrganization,
-  updateOrganization,
-  deleteOrganization,
 };

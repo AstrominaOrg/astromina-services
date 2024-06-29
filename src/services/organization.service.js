@@ -1,5 +1,5 @@
 const httpStatus = require('http-status');
-const { Organization } = require('../models');
+const { Organization, Issue } = require('../models');
 const ApiError = require('../utils/ApiError');
 
 /**
@@ -85,9 +85,84 @@ const updateOrganizationMembers = async (organizationId, members) => {
   return organization;
 };
 
+const getTopContributors = async (organizationId) => {
+  const organization = await getOrganization(organizationId);
+
+  if (!organization) {
+    throw new ApiError(httpStatus.NOT_FOUND, 'Organization not found');
+  }
+
+  const contributorMap = {};
+
+  await Promise.all(
+    organization.repositories.map(async (repository) => {
+      const issues = await Issue.find({ repositoryId: repository.repositoryId, solved: true }).lean();
+      issues.forEach((issue) => {
+        issue.assignees.forEach((assignee) => {
+          const key = assignee.id;
+          if (contributorMap[key]) {
+            contributorMap[key].count += 1;
+            contributorMap[key].bounty += issue.price;
+          } else {
+            contributorMap[key] = {
+              login: assignee.login,
+              id: assignee.id,
+              count: 1,
+              bounty: issue.price,
+            };
+          }
+        });
+      });
+    })
+  );
+
+  const contributors = Object.values(contributorMap);
+  contributors.sort((a, b) => b.count - a.count);
+
+  return contributors.slice(0, 10);
+};
+
+const getBountyTotals = async (organizationId) => {
+  const organization = await getOrganization(organizationId);
+  if (!organization) {
+    throw new ApiError(httpStatus.NOT_FOUND, 'Organization not found');
+  }
+
+  let totalRewarded = 0;
+  let totalActive = 0;
+
+  await Promise.all(
+    organization.repositories.map(async (repository) => {
+      const issues = await Issue.find({ repositoryId: repository.repositoryId }).lean();
+      issues.forEach((issue) => {
+        if (issue.solved) {
+          totalRewarded += issue.price;
+        } else {
+          totalActive += issue.price;
+        }
+      });
+    })
+  );
+
+  return { totalRewarded, totalActive };
+};
+
+const createOrUpdateOrganization = async (organizationBody) => {
+  const organization = await getOrganization(organizationBody.organizationId);
+
+  if (organization) {
+    return updateOrganizationById(organizationBody.organizationId, organizationBody);
+  }
+
+  return createOrganization(organizationBody);
+};
+
 module.exports = {
+  createOrUpdateOrganization,
   createOrganization,
   queryOrganizations,
+  getTopContributors,
+  getBountyTotals,
   updateOrganizationMembers,
   getOrganization,
   updateOrganizationById,

@@ -3,7 +3,6 @@ const {
   OrganizationEventService,
   PullRequestEventService,
   RepositoryEventService,
-  UserEventService,
 } = require('./services/events');
 /**
  * This is the main entrypoint to your Probot app

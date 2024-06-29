@@ -1,5 +1,5 @@
 const mongoose = require('mongoose');
-const { toJSON } = require('./plugins');
+const { toJSON, paginate } = require('./plugins');
 
 const organizationSchema = new mongoose.Schema(
   {
@@ -49,6 +49,28 @@ const organizationSchema = new mongoose.Schema(
       ],
       default: [],
     },
+    repositories: {
+      type: [
+        {
+          repositoryId: {
+            type: String,
+            required: true,
+          },
+          name: {
+            type: String,
+            required: true,
+          },
+          url: {
+            type: String,
+            required: true,
+          },
+          description: {
+            type: String,
+          },
+        },
+      ],
+      default: [],
+    },
   },
   {
     timestamps: true,
@@ -56,6 +78,7 @@ const organizationSchema = new mongoose.Schema(
 );
 
 organizationSchema.plugin(toJSON);
+organizationSchema.plugin(paginate);
 
 /**
  * @typedef Issue

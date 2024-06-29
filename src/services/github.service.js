@@ -1,10 +1,9 @@
 const config = require('../config/config');
 const logger = require('../config/logger');
 const { createOrUpdateIssue, getIssueByIssueNumberAndRepositoryId } = require('./issue.service');
-const fs = require('fs');
-const { createRepository, createOrUpdateRepository } = require('./repository.service');
+const { createOrUpdateRepository } = require('./repository.service');
 const { createOrUpdatePullRequest } = require('./pr.service');
-const { url } = require('inspector');
+const { createOrUpdateOrganization } = require('./organization.service');
 
 const linkedIssuesQuery = `
 query getLinkedIssues(
@@ -295,7 +294,7 @@ const getRepositoryPullRequests = async (org, repo) => {
 
     if (pr.merged) {
       linked_issues.forEach(async (issue) => {
-        const issueDB = await getIssueByIssueNumberAndRepositoryId(issue.number, repo.node_id);
+        const issueDB = await getIssueByIssueNumberAndRepositoryId(issue, repo.id);
         if (issueDB) {
           await createOrUpdateIssue({
             issueId: issueDB.issueId,
@@ -419,15 +418,22 @@ const getOrganizationMembers = async (org) => {
 
     const roles = await Promise.all(
       members.map(async (member) => {
-        const role = await octokitInstance.rest.orgs.getMembershipForUser({
-          org,
-          username: member.login,
-        });
+        let role = 'member';
+        try {
+          const roleData = await octokitInstance.rest.orgs.getMembershipForUser({
+            org,
+            username: member.login,
+          });
+
+          role = roleData.data.role;
+        } catch (error) {
+          
+        }
 
         return {
           login: member.login,
           id: member.id,
-          role: role.data.role,
+          role,
         };
       })
     );
@@ -473,7 +479,28 @@ const getOrganizationRepos = async (org) => {
  * @returns {Promise<Void>}
  */
 const recoverOrganization = async (name) => {
+  const organization = await getOrganization(name);
+  createOrUpdateOrganization({
+    organizationId: organization.data.node_id,
+    title: organization.data.login,
+    url: organization.data.url,
+    description: organization.data.description,
+    avatar_url: organization.data.avatar_url,
+    state: 'accepted',
+    members: await getOrganizationMembers(name),
+  });
+
   let repos = await getOrganizationRepos(name);
+
+  createOrUpdateOrganization({
+    organizationId: organization.data.node_id,
+    repositories: repos.map((repo) => ({
+      repositoryId: repo.id,
+      name: repo.name,
+      description: repo.description,
+      url: repo.url,
+    })),
+  });
 
   repos.forEach(async (repo) => {
     await createOrUpdateRepository({

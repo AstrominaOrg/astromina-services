@@ -3,6 +3,7 @@ const authRoute = require('./auth.route');
 const userRoute = require('./user.route');
 const issueRoute = require('./issue.route');
 const repositoryRoute = require('./repository.route');
+const organizationRoute = require('./organization.route');
 const docsRoute = require('./docs.route');
 const config = require('../../config/config');
 
@@ -24,6 +25,10 @@ const defaultRoutes = [
   {
     path: '/repositories',
     route: repositoryRoute,
+  },
+  {
+    path: '/organizations',
+    route: organizationRoute,
   },
 ];
 
