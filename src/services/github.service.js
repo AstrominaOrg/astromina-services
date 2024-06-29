@@ -4,6 +4,7 @@ const { createOrUpdateIssue, getIssueByIssueNumberAndRepositoryId } = require('.
 const fs = require('fs');
 const { createRepository, createOrUpdateRepository } = require('./repository.service');
 const { createOrUpdatePullRequest } = require('./pr.service');
+const { url } = require('inspector');
 
 const linkedIssuesQuery = `
 query getLinkedIssues(
@@ -76,6 +77,7 @@ query ($org: String!, $repo: String!, $pullRequestsFirst: Int!, $pullRequestsAft
         number
         title
         body
+        url
         merged
         commits {
           totalCount
@@ -136,6 +138,7 @@ query ($org: String!, $reposFirst: Int!, $reposAfter: String) {
     repositories(first: $reposFirst, after: $reposAfter) {
       nodes {
         id
+        url
         name
         description
         stargazerCount
@@ -178,6 +181,29 @@ query ($user: String!, $reposFirst: Int!, $reposAfter: String) {
   }
 }`;
 
+const userContributionsQuery = `
+query($userName:String!) { 
+  user(login: $userName){
+    contributionsCollection {
+      totalIssueContributions
+      totalCommitContributions
+      totalPullRequestContributions
+      totalPullRequestReviewContributions
+      contributionCalendar {
+        totalContributions
+        weeks {
+          firstDay
+          contributionDays {
+            contributionCount
+            date
+          }
+        }
+      }
+    }
+  }
+}
+`;
+
 let octokitInstance;
 
 let requestCount = 0;
@@ -195,7 +221,7 @@ const initializeOctokit = async () => {
   const installationId = config.github.appInstallationId;
   octokitInstance = await app.getInstallationOctokit(installationId);
 
-  octokitInstance.hook.before("request", async (options) => {
+  octokitInstance.hook.before('request', async (options) => {
     requestCount++;
     options.headers['X-Github-Next-Global-ID'] = '1';
   });
@@ -242,7 +268,12 @@ const getRepositoryPullRequests = async (org, repo) => {
 
   try {
     while (hasNextPage) {
-      const pullRequestsData = await octokitInstance.graphql(pullRequestsQuery, { org, repo: repo.name, pullRequestsFirst: 100, pullRequestsAfter });
+      const pullRequestsData = await octokitInstance.graphql(pullRequestsQuery, {
+        org,
+        repo: repo.name,
+        pullRequestsFirst: 100,
+        pullRequestsAfter,
+      });
       const pullRequests = pullRequestsData.repository.pullRequests;
 
       allPullRequests = allPullRequests.concat(pullRequests.nodes);
@@ -278,20 +309,22 @@ const getRepositoryPullRequests = async (org, repo) => {
       pr.author = { login: 'ghost' };
     }
 
-
     await createOrUpdatePullRequest({
       pullRequestId: pr.id,
       number: pr.number,
       title: pr.title,
       body: pr.body,
       repositoryId: repo.id,
-      assignees: pr.assignees.nodes.map(assignee => assignee.login ? assignee.login : 'ghost'),
-      requestedReviewers: pr.reviewRequests.nodes.map(request => request.requestedReviewer?.login ? request.requestedReviewer.login : 'ghost'),
-      linkedIssues: pr.closingIssuesReferences.nodes.map(issue => issue.number),
+      assignees: pr.assignees.nodes.map((assignee) => (assignee.login ? assignee.login : 'ghost')),
+      requestedReviewers: pr.reviewRequests.nodes.map((request) =>
+        request.requestedReviewer?.login ? request.requestedReviewer.login : 'ghost'
+      ),
+      linkedIssues: pr.closingIssuesReferences.nodes.map((issue) => issue.number),
       state: pr.state === 'MERGED' ? 'closed' : pr.state.toLowerCase(),
-      labels: pr.labels.nodes.map(label => label.name),
+      labels: pr.labels.nodes.map((label) => label.name),
       creator: pr.author.login,
       merged: pr.merged,
+      url: pr.url,
       commits: pr.commits.totalCount,
       additions: pr.additions,
       deletions: pr.deletions,
@@ -343,7 +376,7 @@ const getRepositoryIssues = async (org, repo) => {
         price = comment.body.split('/price')[1].trim();
       }
     });
-    
+
     if (issue.author === null) {
       issue.author = { login: 'ghost' };
     }
@@ -357,6 +390,7 @@ const getRepositoryIssues = async (org, repo) => {
         login: assignee.login,
         id: assignee.id,
       })),
+      url: issue.url,
       repositoryId: repo.id,
       creator: issue.author.login,
       labels: issue.labels.nodes.map((label) => label.name),
@@ -446,6 +480,7 @@ const recoverOrganization = async (name) => {
       repositoryId: repo.id,
       name: repo.name,
       description: repo.description,
+      url: repo.url,
       stars: repo.stargazerCount,
       forks: repo.forkCount,
       full_name: repo.nameWithOwner,
@@ -485,7 +520,40 @@ const getOrganization = async (org) => {
   }
 };
 
-recoverOrganization('o1-labs');
+/**
+ * Fetches the contributions of a user.
+ * @param {string} userName - The name of the user.
+ * @returns {Promise<Object>} The contributions of the user.
+ */
+const getUserContributions = async (userName) => {
+  if (!octokitInstance) {
+    await initializeOctokit();
+  }
+
+  try {
+    const contributionsData = await octokitInstance.graphql(userContributionsQuery, {
+      userName,
+    });
+
+    const contributions = contributionsData.user.contributionsCollection;
+    const weekContributions = contributions.contributionCalendar.weeks;
+    contributions.contributionCalendar.weeks = weekContributions.map((week) => {
+      week.totalContributions = week.contributionDays.reduce((acc, day) => acc + day.contributionCount, 0);
+      delete week.contributionDays;
+      return week;
+    });
+
+    contributions.totalContributions = contributions.contributionCalendar.totalContributions;
+    contributions.weeks = contributions.contributionCalendar.weeks;
+    delete contributions.contributionCalendar;
+
+    return contributionsData.user.contributionsCollection;
+  } catch (error) {
+    logger.error('Error fetching user contributions:', error);
+    throw error;
+  }
+}
+
 module.exports = {
   getLinkedIssues,
   getOrganizationMembers,

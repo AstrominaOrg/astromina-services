@@ -1,6 +1,6 @@
 const { createOrUpdateIssue, updateIssueByIssueId, deleteIssueByIssueId, getIssue } = require('../issue.service');
 const { createPrivateThread, addThreadMember, removeThreadMember, sendThreadMessage } = require('../discord.service');
-const { getUserByGithubId } = require('../user.service');
+const { getUser } = require('../user.service');
 const dcbot = require('../../dcbot');
 const config = require('../../config/config');
 const { wrapHandlerWithCheck } = require('./helper');
@@ -12,6 +12,7 @@ async function handleIssueCreate(context) {
     issueId: issue.node_id,
     number: issue.number,
     title: issue.title,
+    url: issue.html_url,
     description: issue.body,
     assignees: issue.assignees.map((assignee) => {
       return {
@@ -20,10 +21,7 @@ async function handleIssueCreate(context) {
       };
     }),
     repositoryId: repository.node_id,
-    creator: {
-      login: issue.user.login,
-      id: issue.user.id,
-    },
+    creator: issue.user.login,
     labels: issue.labels.map((label) => label.name),
     state: issue.state,
   });
@@ -36,6 +34,7 @@ async function handleIssueChange(context) {
     issueId: issue.node_id,
     number: issue.number,
     title: issue.title,
+    url: issue.html_url,
     description: issue.body,
     assignees: issue.assignees.map((assignee) => {
       return {
@@ -44,10 +43,7 @@ async function handleIssueChange(context) {
       };
     }),
     repositoryId: repository.node_id,
-    creator: {
-      login: issue.user.login,
-      id: issue.user.id,
-    },
+    creator: issue.user.login,
     labels: issue.labels.map((label) => label.name),
     state: issue.state,
   });
@@ -60,23 +56,21 @@ async function handleAssigned(context) {
     issueId: issue.node_id,
     number: issue.number,
     title: issue.title,
+    url: issue.html_url,
     description: issue.body,
     assignees: issue.assignees.map((dev) => {
       return {
         login: dev.login,
-        id: dev.id,
+        id: dev.node_id,
       };
     }),
     repositoryId: repository.node_id,
-    creator: {
-      login: issue.user.login,
-      id: issue.user.id,
-    },
+    creator: issue.user.login,
     labels: issue.labels.map((label) => label.name),
     state: issue.state,
   });
 
-  const user = await getUserByGithubId(assignee.id);
+  const user = await getUser(assignee.login);
 
   if (user && user.discord && user.discord.id !== null) {
     const discordId = user.discord.id;
@@ -87,7 +81,7 @@ async function handleAssigned(context) {
     }
   }
 
-  const creator = await getUserByGithubId(issue.user.id);
+  const creator = await getUser(issue.user.login);
 
   if (creator && creator.discord && creator.discord.id !== null) {
     const discordId = creator.discord.id;
@@ -102,7 +96,7 @@ async function handleAssigned(context) {
 async function handleUnassigned(context) {
   const { issue, assignee } = context.payload;
 
-  const user = await getUserByGithubId(assignee.id);
+  const user = await getUser(assignee.login);
 
   if (user && user.discord && user.discord.id) {
     const discordId = user.discord.id;
@@ -162,7 +156,7 @@ async function handlePriceCommand(context) {
     const userDiscordIds = await Promise.all(
       issue.assignees
         .map(async (assignee) => {
-          const user = await getUserByGithubId(assignee.id);
+          const user = await getUser(assignee.login);
           return user.discord.id;
         })
         .filter((discordId) => discordId !== null)

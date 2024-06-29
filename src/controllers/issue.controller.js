@@ -17,10 +17,11 @@ const getIssues = catchAsync(async (req, res) => {
     'title',
     'description',
     'repositoryId',
-    'creatorLogin',
+    'creator',
     'state',
     'solved',
     'labels',
+    'assignees',
   ]);
 
   if (req.query.priceMin !== undefined || req.query.priceMax !== undefined) {
@@ -31,6 +32,10 @@ const getIssues = catchAsync(async (req, res) => {
     if (req.query.priceMax !== undefined) {
       filter.price.$lte = parseInt(req.query.priceMax, 10);
     }
+  }
+
+  if (req.query.assigneeUsername) {
+    filter.assignees = { $elemMatch: { login: req.query.assigneeUsername } };
   }
 
   const options = pick(req.query, ['sortBy', 'limit', 'page']);

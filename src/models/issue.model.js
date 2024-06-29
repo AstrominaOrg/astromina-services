@@ -16,6 +16,10 @@ const issueSchema = new mongoose.Schema(
       type: String,
       required: true,
     },
+    url: {
+      type: String,
+      required: true,
+    },
     description: {
       type: String,
     },

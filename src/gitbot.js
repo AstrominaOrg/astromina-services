@@ -3,6 +3,7 @@ const {
   OrganizationEventService,
   PullRequestEventService,
   RepositoryEventService,
+  UserEventService,
 } = require('./services/events');
 /**
  * This is the main entrypoint to your Probot app
@@ -21,13 +22,15 @@ module.exports = (app) => {
   */
 
   app.on('issues.opened', async (context) => {
-    IssueEventService.handleIssueCreate(context);
+    await IssueEventService.handleIssueCreate(context);
+    // await UserEventService.handleIssueStateChange(context);
   });
 
   app.on(
     ['issues.closed', 'issues.deleted', 'issues.edited', 'issues.deleted', 'issues.labeled', 'issues.unlabeled'],
     async (context) => {
-      IssueEventService.handleIssueChange(context);
+      await IssueEventService.handleIssueChange(context);
+      // await UserEventService.handleIssueStateChange(context);
     }
   );
 
@@ -36,11 +39,13 @@ module.exports = (app) => {
   });
 
   app.on('issues.assigned', async (context) => {
-    IssueEventService.handleAssigned(context);
+    await IssueEventService.handleAssigned(context);
+    // await UserEventService.handleIssueAssigned(context);
   });
 
   app.on('issues.unassigned', async (context) => {
-    IssueEventService.handleUnassigned(context);
+    await IssueEventService.handleUnassigned(context);
+    // await UserEventService.handleIssueAssigned(context);
   });
 
   app.on('issue_comment.created', async (context) => {

@@ -19,7 +19,8 @@ const getIssues = {
     title: Joi.string(),
     description: Joi.string(),
     repositoryId: Joi.number().integer(),
-    creatorLogin: Joi.string(),
+    creator: Joi.string(),
+    assigneeUsername: Joi.string(),
     state: Joi.string().valid('open', 'closed'),
     solved: Joi.boolean(),
     priceMin: Joi.number().integer().min(0),
@@ -33,7 +34,7 @@ const getIssues = {
 
 const getIssue = {
   params: Joi.object().keys({
-    issueId: Joi.number().integer().required(),
+    issueId: Joi.string().required(),
   }),
 };
 

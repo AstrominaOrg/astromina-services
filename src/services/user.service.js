@@ -3,18 +3,6 @@ const { User } = require('../models');
 const ApiError = require('../utils/ApiError');
 
 /**
- * Create a user
- * @param {Object} userBody
- * @returns {Promise<User>}
- */
-const createUser = async (userBody) => {
-  if (await User.isEmailTaken(userBody.email)) {
-    throw new ApiError(httpStatus.BAD_REQUEST, 'Email already taken');
-  }
-  return User.create(userBody);
-};
-
-/**
  * Query for users
  * @param {Object} filter - Mongo filter
  * @param {Object} options - Query options
@@ -79,13 +67,8 @@ const deleteUserById = async (userId) => {
   return user;
 };
 
-/**
- * Find user by githubId
- * @param {string} githubId
- * @returns {Promise<User>}
- */
-const getUserByGithubId = async (githubId) => {
-  return User.findOne({ 'github.id': githubId });
+const getUser = async (username) => {
+  return User.findOne({ 'github.username': username });
 };
 
 /**
@@ -93,8 +76,8 @@ const getUserByGithubId = async (githubId) => {
  * @param {Object} profile
  * @returns {Promise<User>}
  */
-const createUserByGithubId = async (profile) => {
-  const user = await getUserByGithubId(profile.id);
+const createUser = async (profile) => {
+  const user = await getUser(profile.username);
 
   if (user) {
     return user;
@@ -104,7 +87,7 @@ const createUserByGithubId = async (profile) => {
     name: profile.displayName || profile.username,
     email: profile._json.email,
     github: {
-      id: profile.id,
+      id: profile.nodeId,
       username: profile.username,
       emails: profile.emails.map((email) => email.value),
       photos: profile.photos.map((photo) => photo.value),
@@ -136,6 +119,57 @@ const updateUserDiscordByUserId = async (userId, profile) => {
   return user;
 };
 
+const addIssue = async (username, issue, type) => {
+  const user = await getUser(username);
+
+  if (!user) {
+    throw new ApiError(httpStatus.NOT_FOUND, 'User not found');
+  }
+
+  const subIssue = {
+    issueId: issue.issueId,
+    number: issue.number,
+    title: issue.title,
+    url: issue.url,
+    creator: issue.creator,
+    thread: issue.thread,
+    price: issue.price,
+    created_at: issue.created_at,
+  };
+
+  const issueSolved = user.issues.solved.find((i) => i.issueId === subIssue.issueId);
+  const issueAssigned = user.issues.assigned.find((i) => i.issueId === subIssue.issueId);
+  const issueClosed = user.issues.closed.find((i) => i.issueId === subIssue.issueId);
+
+  if (issueSolved) {
+    user.issues.solved = user.issues.solved.filter((i) => i.issueId !== subIssue.issueId);
+  }
+  if (issueAssigned) {
+    user.issues.assigned = user.issues.assigned.filter((i) => i.issueId !== subIssue.issueId);
+  }
+  if (issueClosed) {
+    user.issues.closed = user.issues.closed.filter((i) => i.issueId !== subIssue.issueId);
+  }
+
+  switch (type) {
+    case 'solved':
+      user.issues.solved.push(subIssue);
+      break;
+    case 'assigned':
+      user.issues.assigned.push(subIssue);
+      break;
+    case 'closed':
+      user.issues.closed.push(subIssue);
+      break;
+    default:
+      break;
+  }
+
+  await user.save();
+
+  return user;
+};
+
 /**
  * Get user by discordId
  * @param {string} discordId
@@ -146,14 +180,14 @@ const getUserByDiscordId = async (discordId) => {
 };
 
 module.exports = {
-  createUser,
   queryUsers,
   getUserById,
   getUserByEmail,
   updateUserById,
   deleteUserById,
-  createUserByGithubId,
+  createUser,
   getUserByDiscordId,
-  getUserByGithubId,
+  getUser,
+  addIssue,
   updateUserDiscordByUserId,
 };

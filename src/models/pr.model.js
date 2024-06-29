@@ -19,6 +19,10 @@ const pullRequestScheme = new mongoose.Schema(
     body: {
       type: String,
     },
+    url: {
+      type: String,
+      required: true,
+    },
     repositoryId: {
       type: String,
       required: true,

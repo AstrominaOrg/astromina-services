@@ -7,6 +7,7 @@ async function handleRepositoryAdd(context) {
   await createOrUpdateRepository({
     repositoryId: repository.node_id,
     name: repository.name,
+    url: repository.html_url,
     full_name: repository.full_name,
     owner: installation.account.login,
     type: installation.account.type,

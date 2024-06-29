@@ -5,7 +5,7 @@ const { Strategy: DiscordStrategy } = require('passport-discord');
 const config = require('./config');
 const { tokenTypes } = require('./tokens');
 const { User, Admin } = require('../models');
-const { createUserByGithubId } = require('../services/user.service');
+const { createUser } = require('../services/user.service');
 
 const jwtOptions = {
   secretOrKey: config.jwt.secret,
@@ -39,10 +39,13 @@ const githubStrategy = new GitHubStrategy(
     clientID: config.github.oauthClientId,
     clientSecret: config.github.oauthClientSecret,
     callbackURL: config.github.callbackUrl,
+    customHeaders: {
+      'X-Github-Next-Global-ID': '1',
+    },
   },
   async (accessToken, refreshToken, profile, done) => {
     try {
-      const user = await createUserByGithubId(profile);
+      const user = await createUser(profile);
       return done(null, user);
     } catch (error) {
       return done(error, false);
