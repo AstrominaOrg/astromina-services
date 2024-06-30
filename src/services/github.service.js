@@ -313,21 +313,29 @@ const getRepositoryPullRequests = async (org, repo) => {
       number: pr.number,
       title: pr.title,
       body: pr.body,
-      repositoryId: repo.id,
-      assignees: pr.assignees.nodes.map((assignee) => (assignee.login ? assignee.login : 'ghost')),
-      requestedReviewers: pr.reviewRequests.nodes.map((request) =>
-        request.requestedReviewer?.login ? request.requestedReviewer.login : 'ghost'
-      ),
+      repository: {
+        id: repo.id,
+        name: repo.name,
+      },
+      assignees: pr.assignees.nodes.map((assignee) => {
+        return {
+          login: (assignee.login ? assignee.login : 'ghost'),
+        }
+      }),
+      requestedReviewers: pr.reviewRequests.nodes.map((request) => {
+        return {
+          login: request.requestedReviewer?.login ? request.requestedReviewer.login : 'ghost',
+        };
+      }),
       linkedIssues: pr.closingIssuesReferences.nodes.map((issue) => issue.number),
       state: pr.state === 'MERGED' ? 'closed' : pr.state.toLowerCase(),
       labels: pr.labels.nodes.map((label) => label.name),
-      creator: pr.author.login,
+      creator: {
+        login: pr.author.login,
+      },
       merged: pr.merged,
       url: pr.url,
       commits: pr.commits.totalCount,
-      additions: pr.additions,
-      deletions: pr.deletions,
-      changedFiles: pr.changedFiles,
       comments: pr.comments.totalCount,
       reviewComments: pr.reviewThreads.totalCount,
       maintainerCanModify: pr.maintainerCanModify,
@@ -390,8 +398,16 @@ const getRepositoryIssues = async (org, repo) => {
         id: assignee.id,
       })),
       url: issue.url,
-      repositoryId: repo.id,
-      creator: issue.author.login,
+      repository: {
+        id: repo.id,
+        name: repo.name,
+      },
+      owner: {
+        login: repo.owner.login,
+      },
+      creator: {
+        login: issue.author.login,
+      },
       labels: issue.labels.nodes.map((label) => label.name),
       state: issue.state.toLowerCase(),
       price: price,
@@ -426,9 +442,7 @@ const getOrganizationMembers = async (org) => {
           });
 
           role = roleData.data.role;
-        } catch (error) {
-          
-        }
+        } catch (error) {}
 
         return {
           login: member.login,
@@ -495,7 +509,7 @@ const recoverOrganization = async (name) => {
   createOrUpdateOrganization({
     organizationId: organization.data.node_id,
     repositories: repos.map((repo) => ({
-      repositoryId: repo.id,
+      id: repo.id,
       name: repo.name,
       description: repo.description,
       url: repo.url,
@@ -511,7 +525,9 @@ const recoverOrganization = async (name) => {
       stars: repo.stargazerCount,
       forks: repo.forkCount,
       full_name: repo.nameWithOwner,
-      owner: repo.owner.login,
+      owner: {
+        login: repo.owner.login,
+      },
       type: 'Organization',
       private: repo.visibility === 'PRIVATE',
       state: 'pending',
@@ -579,7 +595,9 @@ const getUserContributions = async (userName) => {
     logger.error('Error fetching user contributions:', error);
     throw error;
   }
-}
+};
+
+recoverOrganization('AstrominaOrg')
 
 module.exports = {
   getLinkedIssues,

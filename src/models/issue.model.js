@@ -36,13 +36,27 @@ const issueSchema = new mongoose.Schema(
       ],
       default: [],
     },
-    repositoryId: {
-      type: String,
-      required: true,
+    repository: {
+      id: {
+        type: String,
+        required: true,
+      },
+      name: {
+        type: String,
+        required: true,
+      },
+    },
+    owner: {
+      login: {
+        type: String,
+        required: true,
+      },
     },
     creator: {
-      type: String,
-      required: true,
+      login: {
+        type: String,
+        required: true,
+      },
     },
     state: {
       type: String,

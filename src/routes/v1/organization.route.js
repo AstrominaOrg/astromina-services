@@ -10,15 +10,15 @@ const router = express.Router();
 router.route('/').get(validate(organizationValidation.getOrganizations), cache, organizationController.getOrganizations);
 
 router
-  .route('/:organizationId')
-  .get(validate(organizationValidation.getOrganization), organizationController.getOrganization);
+  .route('/:organizationName')
+  .get(validate(organizationValidation.getOrganization), organizationController.getOrganizationByName);
 
 router
-  .route('/:organizationId/top-contributors')
+  .route('/:organizationName/top-contributors')
   .get(validate(organizationValidation.getTopContributors), organizationController.getTopContributors);
 
 router
-  .route('/:organizationId/bounty-totals')
+  .route('/:organizationName/bounty-totals')
   .get(validate(organizationValidation.getBountyTotals), organizationController.getBountyTotals);
 
 module.exports = router;

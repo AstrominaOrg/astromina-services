@@ -1,5 +1,5 @@
 const httpStatus = require('http-status');
-const { User } = require('../models');
+const { User, Issue } = require('../models');
 const ApiError = require('../utils/ApiError');
 
 /**
@@ -179,6 +179,32 @@ const getUserByDiscordId = async (discordId) => {
   return User.findOne({ 'discord.id': discordId });
 };
 
+const getContributedProjects = async (username) => {
+  const user = await getUser(username);
+  if (!user) {
+    throw new ApiError(httpStatus.NOT_FOUND, 'User not found');
+  }
+
+  const totalContributions = await Issue.aggregate([
+    {
+      $match: {
+        'creator.login': username,
+        solved: true,
+      },
+    },
+    {
+      $group: {
+        _id: '$repositoryId',
+        project: { $first: '$owner' },
+        count: { $sum: 1 },
+        bounty: { $sum: '$price' },
+      },
+    },
+  ]);
+
+  return totalContributions;
+};
+
 module.exports = {
   queryUsers,
   getUserById,
@@ -189,5 +215,6 @@ module.exports = {
   getUserByDiscordId,
   getUser,
   addIssue,
+  getContributedProjects,
   updateUserDiscordByUserId,
 };

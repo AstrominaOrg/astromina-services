@@ -23,16 +23,34 @@ const pullRequestScheme = new mongoose.Schema(
       type: String,
       required: true,
     },
-    repositoryId: {
-      type: String,
-      required: true,
+    repository: {
+      id: {
+        type: String,
+        required: true,
+      },
+      name: {
+        type: String,
+        required: true,
+      },
     },
     assignees: {
-      type: [String],
+      type: [
+        {
+          login: {
+            type: String,
+          },
+        },
+      ],
       default: [],
     },
     requestedReviewers: {
-      type: [String],
+      type: [
+        {
+          login: {
+            type: String,
+          },
+        },
+      ],
       default: [],
     },
     linkedIssues: {
@@ -49,25 +67,16 @@ const pullRequestScheme = new mongoose.Schema(
       default: [],
     },
     creator: {
-      type: String,
+      login: {
+        type: String,
+        required: true,
+      },
     },
     merged: {
       type: Boolean,
       default: false,
     },
     commits: {
-      type: Number,
-      default: 0,
-    },
-    additions: {
-      type: Number,
-      default: 0,
-    },
-    deletions: {
-      type: Number,
-      default: 0,
-    },
-    changedFiles: {
       type: Number,
       default: 0,
     },

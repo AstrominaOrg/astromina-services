@@ -29,6 +29,10 @@ async function getOrganization(organizationId) {
   return Organization.findOne({ organizationId });
 }
 
+async function getOrganizationByName(organizationName) {
+  return Organization.findOne({ title: organizationName });
+}
+
 /**
  * Update organization by id
  * @param {ObjectId} organizationId
@@ -85,8 +89,8 @@ const updateOrganizationMembers = async (organizationId, members) => {
   return organization;
 };
 
-const getTopContributors = async (organizationId) => {
-  const organization = await getOrganization(organizationId);
+const getTopContributors = async (organizationName) => {
+  const organization = await getOrganizationByName(organizationName);
 
   if (!organization) {
     throw new ApiError(httpStatus.NOT_FOUND, 'Organization not found');
@@ -94,27 +98,23 @@ const getTopContributors = async (organizationId) => {
 
   const contributorMap = {};
 
-  await Promise.all(
-    organization.repositories.map(async (repository) => {
-      const issues = await Issue.find({ repositoryId: repository.repositoryId, solved: true }).lean();
-      issues.forEach((issue) => {
-        issue.assignees.forEach((assignee) => {
-          const key = assignee.id;
-          if (contributorMap[key]) {
-            contributorMap[key].count += 1;
-            contributorMap[key].bounty += issue.price;
-          } else {
-            contributorMap[key] = {
-              login: assignee.login,
-              id: assignee.id,
-              count: 1,
-              bounty: issue.price,
-            };
-          }
-        });
-      });
-    })
-  );
+  const issues = await Issue.find({ 'owner.login': organizationName }).lean();
+  issues.forEach((issue) => {
+    issue.assignees.forEach((assignee) => {
+      const key = assignee.id;
+      if (contributorMap[key]) {
+        contributorMap[key].count += 1;
+        contributorMap[key].bounty += issue.price;
+      } else {
+        contributorMap[key] = {
+          login: assignee.login,
+          id: assignee.id,
+          count: 1,
+          bounty: issue.price,
+        };
+      }
+    });
+  });
 
   const contributors = Object.values(contributorMap);
   contributors.sort((a, b) => b.count - a.count);
@@ -122,8 +122,8 @@ const getTopContributors = async (organizationId) => {
   return contributors.slice(0, 10);
 };
 
-const getBountyTotals = async (organizationId) => {
-  const organization = await getOrganization(organizationId);
+const getBountyTotals = async (organizationName) => {
+  const organization = await getOrganizationByName(organizationName);
   if (!organization) {
     throw new ApiError(httpStatus.NOT_FOUND, 'Organization not found');
   }
@@ -131,18 +131,14 @@ const getBountyTotals = async (organizationId) => {
   let totalRewarded = 0;
   let totalActive = 0;
 
-  await Promise.all(
-    organization.repositories.map(async (repository) => {
-      const issues = await Issue.find({ repositoryId: repository.repositoryId }).lean();
-      issues.forEach((issue) => {
-        if (issue.solved) {
-          totalRewarded += issue.price;
-        } else {
-          totalActive += issue.price;
-        }
-      });
-    })
-  );
+  const issues = await Issue.find({ 'owner.login': organizationName }).lean();
+  issues.forEach((issue) => {
+    if (issue.solved) {
+      totalRewarded += issue.price;
+    } else {
+      totalActive += issue.price;
+    }
+  });
 
   return { totalRewarded, totalActive };
 };
@@ -165,6 +161,7 @@ module.exports = {
   getBountyTotals,
   updateOrganizationMembers,
   getOrganization,
+  getOrganizationByName,
   updateOrganizationById,
   deleteOrganizationById,
 };

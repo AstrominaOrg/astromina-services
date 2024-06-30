@@ -48,7 +48,11 @@ async function getIssue(issueId) {
  * @returns {Promise<Issue>}
  */
 async function getIssueByIssueNumberAndRepositoryId(issueNumber, repositoryId) {
-  return Issue.findOne({ number: issueNumber, repositoryId });
+  return Issue.findOne({ number: issueNumber, 'repository.id': repositoryId });
+}
+
+async function getIssueByOwnerAndRepoAndIssueNumber(owner, repo, issueNumber) {
+  return Issue.findOne({ 'owner.login': owner, 'repository.name': repo, number: issueNumber });
 }
 
 /**
@@ -99,6 +103,7 @@ module.exports = {
   queryIssues,
   getIssueById,
   getIssueByIssueNumberAndRepositoryId,
+  getIssueByOwnerAndRepoAndIssueNumber,
   getIssue,
   updateIssueByIssueId,
   deleteIssueByIssueId,

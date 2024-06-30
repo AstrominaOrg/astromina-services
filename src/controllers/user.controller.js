@@ -4,11 +4,6 @@ const ApiError = require('../utils/ApiError');
 const catchAsync = require('../utils/catchAsync');
 const { userService } = require('../services');
 
-const createUser = catchAsync(async (req, res) => {
-  const user = await userService.createUser(req.body);
-  res.status(httpStatus.CREATED).send(user);
-});
-
 const getUsers = catchAsync(async (req, res) => {
   const filter = pick(req.query, ['name', 'role']);
   const options = pick(req.query, ['sortBy', 'limit', 'page']);
@@ -17,32 +12,25 @@ const getUsers = catchAsync(async (req, res) => {
 });
 
 const getUser = catchAsync(async (req, res) => {
-  const user = await userService.getUserById(req.params.userId);
+  const user = await userService.getUser(req.params.username);
   if (!user) {
     throw new ApiError(httpStatus.NOT_FOUND, 'User not found');
   }
   res.send(user);
 });
 
-const updateUser = catchAsync(async (req, res) => {
-  const user = await userService.updateUserById(req.params.userId, req.body);
-  res.send(user);
-});
-
-const deleteUser = catchAsync(async (req, res) => {
-  await userService.deleteUserById(req.params.userId);
-  res.status(httpStatus.NO_CONTENT).send();
-});
-
 const getMe = catchAsync(async (req, res) => {
   res.send(req.authUser);
 });
 
+const getContributedProjects = catchAsync(async (req, res) => {
+  const result = await userService.getContributedProjects(req.params.username);
+  res.send(result);
+});
+
 module.exports = {
-  createUser,
+  getContributedProjects,
   getUsers,
   getUser,
   getMe,
-  updateUser,
-  deleteUser,
 };

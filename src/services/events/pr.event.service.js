@@ -14,18 +14,26 @@ async function handlePullRequestCreate(context) {
     number: pullRequest.number,
     title: pullRequest.title,
     body: pullRequest.body,
-    repositoryId: repository.node_id,
-    assignees: pullRequest.assignees.map((assignee) => assignee.login),
-    requestedReviewers: pullRequest.requested_reviewers.map((reviewer) => reviewer.login),
+    repository: {
+      id: repository.node_id,
+      name: repository.name,
+    },
+    assignees: pullRequest.assignees.map((assignee) => {
+      return {
+        login: assignee.login,
+      };
+    }),
+    requestedReviewers: pullRequest.requested_reviewers.map((reviewer) => {
+      return {
+        login: reviewer.login,
+      };
+    }),
     linkedIssues: linkedIssues.repository.pullRequest.closingIssuesReferences.nodes.map((issue) => issue.number),
     state: pullRequest.state,
     labels: pullRequest.labels.map((label) => label.name),
     creator: pullRequest.user.login,
     merged: pullRequest.merged,
     commits: pullRequest.commits,
-    additions: pullRequest.additions,
-    deletions: pullRequest.deletions,
-    changedFiles: pullRequest.changed_files,
     comments: pullRequest.comments,
     reviewComments: pullRequest.review_comments,
     maintainerCanModify: pullRequest.maintainer_can_modify,
@@ -69,17 +77,25 @@ async function handlePullRequestClose(context) {
     pullRequestId: pullRequest.node_id,
     title: pullRequest.title,
     body: pullRequest.body,
-    repositoryId: repository.node_id,
-    assignees: pullRequest.assignees.map((assignee) => assignee.login),
-    requestedReviewers: pullRequest.requested_reviewers.map((reviewer) => reviewer.login),
+    repository: {
+      id: repository.node_id,
+      name: repository.name,
+    },
+    assignees: pullRequest.assignees.map((assignee) => {
+      return {
+        login: assignee.login,
+      };
+    }),
+    requestedReviewers: pullRequest.requested_reviewers.map((reviewer) => {
+      return {
+        login: reviewer.login,
+      };
+    }),
     linkedIssues: linkedIssues.repository.pullRequest.closingIssuesReferences.nodes.map((issue) => issue.number),
     state: pullRequest.state,
     labels: pullRequest.labels.map((label) => label.name),
     merged: pullRequest.merged,
     commits: pullRequest.commits,
-    additions: pullRequest.additions,
-    deletions: pullRequest.deletions,
-    changedFiles: pullRequest.changed_files,
     comments: pullRequest.comments,
     reviewComments: pullRequest.review_comments,
     maintainerCanModify: pullRequest.maintainer_can_modify,

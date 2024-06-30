@@ -83,10 +83,15 @@ const createOrUpdateRepository = async (repositoryBody) => {
   return createRepository(repositoryBody);
 };
 
+const getRepositoryByOwnerAndName = async (owner, name) => {
+  return Repository.findOne({ 'owner.login': owner, name });
+};
+
 module.exports = {
   createRepository,
   queryRepositories,
   getRepositoryById,
+  getRepositoryByOwnerAndName,
   getRepositoryByRepoId,
   createOrUpdateRepository,
   updateRepositoryByRepoId,

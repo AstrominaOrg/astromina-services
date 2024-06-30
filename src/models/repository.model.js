@@ -17,8 +17,10 @@ const repositorySchema = new mongoose.Schema(
       required: true,
     },
     owner: {
-      type: String,
-      required: true,
+      login: {
+        type: String,
+        required: true,
+      },
     },
     url: {
       type: String,

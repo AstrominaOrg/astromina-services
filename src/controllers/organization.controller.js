@@ -19,13 +19,21 @@ const getOrganization = catchAsync(async (req, res) => {
   res.send(organization);
 });
 
+const getOrganizationByName = catchAsync(async (req, res) => {
+  const organization = await organizationService.getOrganizationByName(req.params.organizationName);
+  if (!organization) {
+    throw new ApiError(httpStatus.NOT_FOUND, 'Organization not found');
+  }
+  res.send(organization);
+});
+
 const getTopContributors = catchAsync(async (req, res) => {
-  const result = await organizationService.getTopContributors(req.params.organizationId);
+  const result = await organizationService.getTopContributors(req.params.organizationName);
   res.send(result);
 });
 
 const getBountyTotals = catchAsync(async (req, res) => {
-  const { totalRewarded, totalActive } = await organizationService.getBountyTotals(req.params.organizationId);
+  const { totalRewarded, totalActive } = await organizationService.getBountyTotals(req.params.organizationName);
   res.send({ totalRewarded, totalActive });
 });
 
@@ -34,4 +42,5 @@ module.exports = {
   getBountyTotals,
   getOrganizations,
   getOrganization,
+  getOrganizationByName,
 };

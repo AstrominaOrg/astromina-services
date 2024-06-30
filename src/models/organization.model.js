@@ -52,7 +52,7 @@ const organizationSchema = new mongoose.Schema(
     repositories: {
       type: [
         {
-          repositoryId: {
+          id: {
             type: String,
             required: true,
           },

@@ -8,6 +8,8 @@ const { wrapHandlerWithCheck } = require('./helper');
 async function handleIssueCreate(context) {
   const { issue, repository } = context.payload;
 
+  const owner = issue.repository.owner.login;
+
   await createOrUpdateIssue({
     issueId: issue.node_id,
     number: issue.number,
@@ -20,8 +22,16 @@ async function handleIssueCreate(context) {
         id: assignee.id,
       };
     }),
-    repositoryId: repository.node_id,
-    creator: issue.user.login,
+    repository: {
+      id: repository.node_id,
+      name: repository.name,
+    },
+    owner: {
+      login: owner,
+    },
+    creator: {
+      login: issue.user.login,
+    },
     labels: issue.labels.map((label) => label.name),
     state: issue.state,
   });
@@ -30,6 +40,8 @@ async function handleIssueCreate(context) {
 async function handleIssueChange(context) {
   const { issue, repository } = context.payload;
 
+  const owner = issue.repository.owner.login;
+
   await createOrUpdateIssue({
     issueId: issue.node_id,
     number: issue.number,
@@ -42,8 +54,16 @@ async function handleIssueChange(context) {
         id: assignee.id,
       };
     }),
-    repositoryId: repository.node_id,
-    creator: issue.user.login,
+    repository: {
+      id: repository.node_id,
+      name: repository.name,
+    },
+    owner: {
+      login: owner,
+    },
+    creator: {
+      login: issue.user.login,
+    },
     labels: issue.labels.map((label) => label.name),
     state: issue.state,
   });
@@ -51,6 +71,8 @@ async function handleIssueChange(context) {
 
 async function handleAssigned(context) {
   const { issue, assignee, repository } = context.payload;
+
+  const owner = issue.repository.owner.login;
 
   await createOrUpdateIssue({
     issueId: issue.node_id,
@@ -64,8 +86,16 @@ async function handleAssigned(context) {
         id: dev.node_id,
       };
     }),
-    repositoryId: repository.node_id,
-    creator: issue.user.login,
+    repository: {
+      id: repository.node_id,
+      name: repository.name,
+    },
+    owner: {
+      login: owner,
+    },
+    creator: {
+      login: issue.user.login,
+    },
     labels: issue.labels.map((label) => label.name),
     state: issue.state,
   });

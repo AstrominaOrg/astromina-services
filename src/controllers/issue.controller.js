@@ -5,11 +5,6 @@ const catchAsync = require('../utils/catchAsync');
 const { issueService } = require('../services');
 const { set } = require('../config/redis');
 
-const createIssue = catchAsync(async (req, res) => {
-  const issue = await issueService.createIssue(req.body);
-  res.status(httpStatus.CREATED).send(issue);
-});
-
 const getIssues = catchAsync(async (req, res) => {
   const filter = pick(req.query, [
     'issueId',
@@ -17,7 +12,6 @@ const getIssues = catchAsync(async (req, res) => {
     'title',
     'description',
     'repositoryId',
-    'creator',
     'state',
     'solved',
     'labels',
@@ -38,6 +32,14 @@ const getIssues = catchAsync(async (req, res) => {
     filter.assignees = { $elemMatch: { login: req.query.assigneeUsername } };
   }
 
+  if (req.query.ownerLogin) {
+    filter.owner = { login: req.query.ownerLogin };
+  }
+
+  if (req.query.creatorLogin) {
+    filter.creator = { login: req.query.creatorLogin };
+  }
+
   const options = pick(req.query, ['sortBy', 'limit', 'page']);
   const result = await issueService.queryIssues(filter, options);
 
@@ -46,27 +48,18 @@ const getIssues = catchAsync(async (req, res) => {
 });
 
 const getIssue = catchAsync(async (req, res) => {
-  const issue = await issueService.getIssue(req.params.issueId);
+  const issue = await issueService.getIssueByOwnerAndRepoAndIssueNumber(
+    req.params.owner,
+    req.params.repo,
+    req.params.issueNumber
+  );
   if (!issue) {
     throw new ApiError(httpStatus.NOT_FOUND, 'Issue not found');
   }
   res.send(issue);
 });
 
-const updateIssue = catchAsync(async (req, res) => {
-  const issue = await issueService.updateIssueById(req.params.issueId, req.body);
-  res.send(issue);
-});
-
-const deleteIssue = catchAsync(async (req, res) => {
-  await issueService.deleteIssueById(req.params.issueId);
-  res.status(httpStatus.NO_CONTENT).send();
-});
-
 module.exports = {
-  createIssue,
   getIssues,
   getIssue,
-  updateIssue,
-  deleteIssue,
 };
