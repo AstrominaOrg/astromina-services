@@ -6,6 +6,7 @@ const cache = (req, res, next) => {
   get(key)
     .then((data) => {
       if (data) {
+        logger.info(`Cache hit for key: ${key}`);
         res.send(data);
       } else {
         next();

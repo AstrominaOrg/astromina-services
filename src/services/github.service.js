@@ -51,11 +51,13 @@ query ($org: String!, $repo: String!, $issuesFirst: Int!, $commentsFirst: Int!, 
         assignees(first: 10) {
           nodes {
             login
+            avatarUrl
             id
           }
         }
         author {
           login
+          avatarUrl
         }
       }
       pageInfo {
@@ -95,6 +97,7 @@ query ($org: String!, $repo: String!, $pullRequestsFirst: Int!, $pullRequestsAft
           nodes {
             login
             id
+            avatarUrl
           }
         }
         reviewRequests(first: 5) {
@@ -102,12 +105,14 @@ query ($org: String!, $repo: String!, $pullRequestsFirst: Int!, $pullRequestsAft
             requestedReviewer {
               ... on User {
                 login
+                avatarUrl
               }
             }
           }
         }
         author {
           login
+          avatarUrl
         }
         state
         labels(first: 5) {
@@ -146,6 +151,7 @@ query ($org: String!, $reposFirst: Int!, $reposAfter: String) {
         visibility
         owner {
           login
+          avatarUrl
         }
       }
       pageInfo {
@@ -319,12 +325,14 @@ const getRepositoryPullRequests = async (org, repo) => {
       },
       assignees: pr.assignees.nodes.map((assignee) => {
         return {
-          login: (assignee.login ? assignee.login : 'ghost'),
-        }
+          login: assignee.login ? assignee.login : 'ghost',
+          avatar_url:assignee.avatarUrl ? assignee.avatarUrl : '',
+        };
       }),
       requestedReviewers: pr.reviewRequests.nodes.map((request) => {
         return {
           login: request.requestedReviewer?.login ? request.requestedReviewer.login : 'ghost',
+          avatar_url:request.requestedReviewer?.avatarUrl ? request.requestedReviewer.avatarUrl : '',
         };
       }),
       linkedIssues: pr.closingIssuesReferences.nodes.map((issue) => issue.number),
@@ -332,6 +340,7 @@ const getRepositoryPullRequests = async (org, repo) => {
       labels: pr.labels.nodes.map((label) => label.name),
       creator: {
         login: pr.author.login,
+        avatar_url:pr.author.avatarUrl,
       },
       merged: pr.merged,
       url: pr.url,
@@ -385,7 +394,7 @@ const getRepositoryIssues = async (org, repo) => {
     });
 
     if (issue.author === null) {
-      issue.author = { login: 'ghost' };
+      issue.author = { login: 'ghost', avatarUrl: '' };
     }
 
     createOrUpdateIssue({
@@ -396,6 +405,7 @@ const getRepositoryIssues = async (org, repo) => {
       assignees: issue.assignees.nodes.map((assignee) => ({
         login: assignee.login,
         id: assignee.id,
+        avatar_url: assignee.avatarUrl,
       })),
       url: issue.url,
       repository: {
@@ -404,9 +414,11 @@ const getRepositoryIssues = async (org, repo) => {
       },
       owner: {
         login: repo.owner.login,
+        avatar_url: repo.owner.avatarUrl,
       },
       creator: {
         login: issue.author.login,
+        avatar_url: issue.author.avatarUrl,
       },
       labels: issue.labels.nodes.map((label) => label.name),
       state: issue.state.toLowerCase(),
@@ -499,7 +511,7 @@ const recoverOrganization = async (name) => {
     title: organization.data.login,
     url: organization.data.url,
     description: organization.data.description,
-    avatar_url: organization.data.avatar_url,
+    avatar_url:organization.data.avatarUrl,
     state: 'accepted',
     members: await getOrganizationMembers(name),
   });
@@ -527,6 +539,7 @@ const recoverOrganization = async (name) => {
       full_name: repo.nameWithOwner,
       owner: {
         login: repo.owner.login,
+        avatar_url: repo.owner.avatarUrl,
       },
       type: 'Organization',
       private: repo.visibility === 'PRIVATE',
@@ -597,9 +610,8 @@ const getUserContributions = async (userName) => {
   }
 };
 
-recoverOrganization('AstrominaOrg')
-
 module.exports = {
   getLinkedIssues,
   getOrganizationMembers,
+  getUserContributions,
 };

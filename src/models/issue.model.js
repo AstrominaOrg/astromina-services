@@ -29,6 +29,9 @@ const issueSchema = new mongoose.Schema(
           login: {
             type: String,
           },
+          avatar_url: {
+            type: String,
+          },
           id: {
             type: String,
           },
@@ -51,9 +54,17 @@ const issueSchema = new mongoose.Schema(
         type: String,
         required: true,
       },
+      avatar_url: {
+        type: String,
+        required: true,
+      },
     },
     creator: {
       login: {
+        type: String,
+        required: true,
+      },
+      avatar_url: {
         type: String,
         required: true,
       },

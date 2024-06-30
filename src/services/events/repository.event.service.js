@@ -23,7 +23,10 @@ async function handleRepositoryRemove(context) {
     repositoryId: repository.node_id,
     name: repository.name,
     full_name: repository.full_name,
-    owner: installation.account.login,
+    owner: {
+      login: installation.account.login,
+      avatar_url: installation.account.avatar_url,
+    },
     type: installation.account.type,
     private: repository.private,
     state: 'deleted',

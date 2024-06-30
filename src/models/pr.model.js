@@ -39,6 +39,9 @@ const pullRequestScheme = new mongoose.Schema(
           login: {
             type: String,
           },
+          avatar_url: {
+            type: String,
+          },
         },
       ],
       default: [],

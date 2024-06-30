@@ -8,7 +8,7 @@ const { wrapHandlerWithCheck } = require('./helper');
 async function handleIssueCreate(context) {
   const { issue, repository } = context.payload;
 
-  const owner = issue.repository.owner.login;
+  const { owner } = repository;
 
   await createOrUpdateIssue({
     issueId: issue.node_id,
@@ -27,10 +27,12 @@ async function handleIssueCreate(context) {
       name: repository.name,
     },
     owner: {
-      login: owner,
+      login: owner.login,
+      avatar_url: owner.avatar_url,
     },
     creator: {
       login: issue.user.login,
+      avatar_url: issue.user.avatar_url,
     },
     labels: issue.labels.map((label) => label.name),
     state: issue.state,
@@ -40,7 +42,7 @@ async function handleIssueCreate(context) {
 async function handleIssueChange(context) {
   const { issue, repository } = context.payload;
 
-  const owner = issue.repository.owner.login;
+  const { owner } = repository;
 
   await createOrUpdateIssue({
     issueId: issue.node_id,
@@ -51,6 +53,7 @@ async function handleIssueChange(context) {
     assignees: issue.assignees.map((assignee) => {
       return {
         login: assignee.login,
+        avatar_url: assignee.avatar_url,
         id: assignee.id,
       };
     }),
@@ -59,10 +62,12 @@ async function handleIssueChange(context) {
       name: repository.name,
     },
     owner: {
-      login: owner,
+      login: owner.login,
+      avatar_url: owner.avatar_url,
     },
     creator: {
       login: issue.user.login,
+      avatar_url: issue.user.avatar_url,
     },
     labels: issue.labels.map((label) => label.name),
     state: issue.state,
@@ -72,7 +77,7 @@ async function handleIssueChange(context) {
 async function handleAssigned(context) {
   const { issue, assignee, repository } = context.payload;
 
-  const owner = issue.repository.owner.login;
+  const { owner } = repository;
 
   await createOrUpdateIssue({
     issueId: issue.node_id,
@@ -83,6 +88,7 @@ async function handleAssigned(context) {
     assignees: issue.assignees.map((dev) => {
       return {
         login: dev.login,
+        avatar_url: dev.avatar_url,
         id: dev.node_id,
       };
     }),
@@ -91,10 +97,12 @@ async function handleAssigned(context) {
       name: repository.name,
     },
     owner: {
-      login: owner,
+      login: owner.login,
+      avatar_url: owner.avatar_url,
     },
     creator: {
       login: issue.user.login,
+      avatar_url: issue.user.avatar_url,
     },
     labels: issue.labels.map((label) => label.name),
     state: issue.state,

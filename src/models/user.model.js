@@ -90,6 +90,10 @@ const userSchema = mongoose.Schema(
         type: String,
         trim: true,
       },
+      avatar_url: {
+        type: String,
+        required: true,
+      },
     },
     discord: {
       id: {

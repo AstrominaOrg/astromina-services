@@ -188,21 +188,56 @@ const getContributedProjects = async (username) => {
   const totalContributions = await Issue.aggregate([
     {
       $match: {
-        'creator.login': username,
+        'assignees.login': username,
         solved: true,
       },
     },
     {
       $group: {
-        _id: '$repositoryId',
-        project: { $first: '$owner' },
+        _id: {
+          ownerLogin: '$owner.login',
+          repositoryName: '$repository.name',
+        },
         count: { $sum: 1 },
         bounty: { $sum: '$price' },
       },
     },
+    {
+      $group: {
+        _id: '$_id.ownerLogin',
+        repositories: {
+          $push: {
+            repositoryName: '$_id.repositoryName',
+            count: '$count',
+            bounty: '$bounty',
+          },
+        },
+        totalIssues: { $sum: '$count' },
+        totalBounty: { $sum: '$bounty' },
+      },
+    },
+    {
+      $project: {
+        _id: 0,
+        owner: '$_id',
+        totalIssues: 1,
+        totalBounty: 1,
+        repositories: 1,
+      },
+    },
   ]);
 
-  return totalContributions;
+  const totalCount = totalContributions.reduce((acc, curr) => acc + curr.totalIssues, 0);
+  const totalContributionsRepository = totalContributions.flatMap((contribution) => contribution.repositories).length;
+  const totalBounty = totalContributions.reduce((acc, curr) => acc + curr.totalBounty, 0);
+
+  return {
+    totalContributionsProjects: totalContributions.length,
+    totalContributionsCount: totalCount,
+    totalContributionsRepository,
+    totalBounty,
+    projects: totalContributions,
+  };
 };
 
 module.exports = {

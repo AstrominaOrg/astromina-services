@@ -21,6 +21,10 @@ const repositorySchema = new mongoose.Schema(
         type: String,
         required: true,
       },
+      avatar_url: {
+        type: String,
+        required: true,
+      },
     },
     url: {
       type: String,

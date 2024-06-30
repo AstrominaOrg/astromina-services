@@ -14,6 +14,7 @@ async function handlePullRequestCreate(context) {
     number: pullRequest.number,
     title: pullRequest.title,
     body: pullRequest.body,
+    url: pullRequest.html_url,
     repository: {
       id: repository.node_id,
       name: repository.name,
@@ -21,17 +22,22 @@ async function handlePullRequestCreate(context) {
     assignees: pullRequest.assignees.map((assignee) => {
       return {
         login: assignee.login,
+        avatar_url: assignee.avatar_url,
       };
     }),
     requestedReviewers: pullRequest.requested_reviewers.map((reviewer) => {
       return {
         login: reviewer.login,
+        avatar_url: reviewer.avatar_url,
       };
     }),
     linkedIssues: linkedIssues.repository.pullRequest.closingIssuesReferences.nodes.map((issue) => issue.number),
     state: pullRequest.state,
     labels: pullRequest.labels.map((label) => label.name),
-    creator: pullRequest.user.login,
+    creator: {
+      login: pullRequest.user.login,
+      avatar_url: pullRequest.user.avatar_url,
+    },
     merged: pullRequest.merged,
     commits: pullRequest.commits,
     comments: pullRequest.comments,
@@ -84,13 +90,16 @@ async function handlePullRequestClose(context) {
     assignees: pullRequest.assignees.map((assignee) => {
       return {
         login: assignee.login,
+        avatar_url: assignee.avatar_url,
       };
     }),
     requestedReviewers: pullRequest.requested_reviewers.map((reviewer) => {
       return {
         login: reviewer.login,
+        avatar_url: reviewer.avatar_url,
       };
     }),
+    url: pullRequest.html_url,
     linkedIssues: linkedIssues.repository.pullRequest.closingIssuesReferences.nodes.map((issue) => issue.number),
     state: pullRequest.state,
     labels: pullRequest.labels.map((label) => label.name),
