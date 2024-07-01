@@ -1,9 +1,14 @@
 const config = require('../config/config');
 const logger = require('../config/logger');
-const { createOrUpdateIssue, getIssueByIssueNumberAndRepositoryId } = require('./issue.service');
+const {
+  getIssueByIssueNumberAndRepositoryId,
+  markIssueAsSolved,
+  updatePrice,
+} = require('./issue.service');
 const { createOrUpdateRepository } = require('./repository.service');
-const { createOrUpdatePullRequest } = require('./pr.service');
 const { createOrUpdateOrganization } = require('./organization.service');
+const { saveIssue } = require('../utils/issue.utils');
+const { savePullRequest } = require('../utils/pr.utils');
 
 const linkedIssuesQuery = `
 query getLinkedIssues(
@@ -90,6 +95,7 @@ query ($org: String!, $repo: String!, $pullRequestsFirst: Int!, $pullRequestsAft
           totalCount
         }
         maintainerCanModify
+        mergedAt
         mergeable
         authorAssociation
         isDraft
@@ -302,10 +308,7 @@ const getRepositoryPullRequests = async (org, repo) => {
       linked_issues.forEach(async (issue) => {
         const issueDB = await getIssueByIssueNumberAndRepositoryId(issue, repo.id);
         if (issueDB) {
-          await createOrUpdateIssue({
-            issueId: issueDB.issueId,
-            solved: true,
-          });
+          await markIssueAsSolved(issueDB.issueId);
         }
       });
     }
@@ -314,44 +317,17 @@ const getRepositoryPullRequests = async (org, repo) => {
       pr.author = { login: 'ghost' };
     }
 
-    await createOrUpdatePullRequest({
-      pullRequestId: pr.id,
-      number: pr.number,
-      title: pr.title,
-      body: pr.body,
-      repository: {
-        id: repo.id,
-        name: repo.name,
-      },
-      assignees: pr.assignees.nodes.map((assignee) => {
-        return {
-          login: assignee.login ? assignee.login : 'ghost',
-          avatar_url:assignee.avatarUrl ? assignee.avatarUrl : '',
-        };
-      }),
-      requestedReviewers: pr.reviewRequests.nodes.map((request) => {
-        return {
-          login: request.requestedReviewer?.login ? request.requestedReviewer.login : 'ghost',
-          avatar_url:request.requestedReviewer?.avatarUrl ? request.requestedReviewer.avatarUrl : '',
-        };
-      }),
-      linkedIssues: pr.closingIssuesReferences.nodes.map((issue) => issue.number),
-      state: pr.state === 'MERGED' ? 'closed' : pr.state.toLowerCase(),
-      labels: pr.labels.nodes.map((label) => label.name),
-      creator: {
-        login: pr.author.login,
-        avatar_url:pr.author.avatarUrl,
-      },
-      merged: pr.merged,
-      url: pr.url,
-      commits: pr.commits.totalCount,
-      comments: pr.comments.totalCount,
-      reviewComments: pr.reviewThreads.totalCount,
-      maintainerCanModify: pr.maintainerCanModify,
-      mergeable: pr.mergeable === 'CLEAN' || pr.mergeable === 'MERGEABLE',
-      authorAssociation: pr.authorAssociation,
-      draft: pr.isDraft,
-    });
+    pr.assignees = pr.assignees.nodes;
+    pr.requested_reviewers = pr.reviewRequests.nodes.map((review) => review.requestedReviewer);
+    pr.labels = pr.labels.nodes;
+    pr.mergeable = pr.mergeable === 'CLEAN' || pr.mergeable === 'MERGEABLE';
+    pr.state = pr.state === 'MERGED' ? 'closed' : pr.state.toLowerCase();
+    pr.draft = pr.isDraft;
+    pr.commits = pr.commits.totalCount;
+    pr.comments = pr.comments.totalCount;
+    pr.reviewComments = pr.reviewThreads.totalCount;
+
+    savePullRequest(pr, repo, linked_issues);
   });
 };
 
@@ -397,32 +373,11 @@ const getRepositoryIssues = async (org, repo) => {
       issue.author = { login: 'ghost', avatarUrl: '' };
     }
 
-    createOrUpdateIssue({
-      issueId: issue.id,
-      number: issue.number,
-      title: issue.title,
-      description: issue.body,
-      assignees: issue.assignees.nodes.map((assignee) => ({
-        login: assignee.login,
-        id: assignee.id,
-        avatar_url: assignee.avatarUrl,
-      })),
-      url: issue.url,
-      repository: {
-        id: repo.id,
-        name: repo.name,
-      },
-      owner: {
-        login: repo.owner.login,
-        avatar_url: repo.owner.avatarUrl,
-      },
-      creator: {
-        login: issue.author.login,
-        avatar_url: issue.author.avatarUrl,
-      },
-      labels: issue.labels.nodes.map((label) => label.name),
-      state: issue.state.toLowerCase(),
-      price: price,
+    issue.labels = issue.labels.nodes;
+    issue.assignees = issue.assignees.nodes;
+
+    saveIssue(issue, repo).then(() => {
+      updatePrice(issue.id, price);
     });
   });
 };
@@ -505,13 +460,17 @@ const getOrganizationRepos = async (org) => {
  * @returns {Promise<Void>}
  */
 const recoverOrganization = async (name) => {
+  if (!octokitInstance) {
+    await initializeOctokit();
+  }
+
   const organization = await getOrganization(name);
   createOrUpdateOrganization({
     organizationId: organization.data.node_id,
     title: organization.data.login,
     url: organization.data.url,
     description: organization.data.description,
-    avatar_url:organization.data.avatarUrl,
+    avatar_url: organization.data.avatarUrl,
     state: 'accepted',
     members: await getOrganizationMembers(name),
   });
@@ -528,7 +487,8 @@ const recoverOrganization = async (name) => {
     })),
   });
 
-  repos.forEach(async (repo) => {
+  for (let i = 0; i < repos.length; i++) {
+    const repo = repos[i];
     await createOrUpdateRepository({
       repositoryId: repo.id,
       name: repo.name,
@@ -547,11 +507,10 @@ const recoverOrganization = async (name) => {
     });
 
     await getRepositoryIssues(name, repo);
-
     await getRepositoryPullRequests(name, repo);
 
     logger.info(`Repository recovered: ${repo.name}`);
-  });
+  }
 };
 
 /**
@@ -612,6 +571,7 @@ const getUserContributions = async (userName) => {
 
 module.exports = {
   getLinkedIssues,
+  recoverOrganization,
   getOrganizationMembers,
   getUserContributions,
 };

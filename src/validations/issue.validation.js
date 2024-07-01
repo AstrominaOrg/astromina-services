@@ -20,7 +20,7 @@ const getIssues = {
     description: Joi.string(),
     repositoryId: Joi.number().integer(),
     ownerLogin: Joi.string(),
-    creatorLogin: Joi.string(),
+    managerLogin: Joi.string(),
     assigneeUsername: Joi.string(),
     state: Joi.string().valid('open', 'closed'),
     solved: Joi.boolean(),

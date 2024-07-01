@@ -35,9 +35,15 @@ const getUserGithubActivity = catchAsync(async (req, res) => {
   res.send(result);
 });
 
+const getUserActivity = catchAsync(async (req, res) => {
+  const result = await userService.getUserActivity(req.params.username);
+  res.send(result);
+});
+
 module.exports = {
   getContributedProjects,
   getUserGithubActivity,
+  getUserActivity,
   getUsers,
   getUser,
   getMe,

@@ -1,4 +1,5 @@
 const httpStatus = require('http-status');
+const mongoose = require('mongoose');
 const { User, Issue } = require('../models');
 const ApiError = require('../utils/ApiError');
 
@@ -240,10 +241,56 @@ const getContributedProjects = async (username) => {
   };
 };
 
+const getUserActivity = async (username, page = 1, limit = 10) => {
+  try {
+    const skip = (page - 1) * limit;
+
+    const activities = await mongoose.connection.db
+      .collection('issues')
+      .aggregate([
+        {
+          $facet: {
+            pullRequests: [
+              { $match: { 'assignees.login': username, merged: true } },
+              { $addFields: { type: 'pullRequest' } },
+            ],
+            issues: [{ $match: { 'assignees.login': username, solved: true } }, { $addFields: { type: 'issue' } }],
+          },
+        },
+        {
+          $project: {
+            activities: {
+              $concatArrays: ['$pullRequests', '$issues'],
+            },
+          },
+        },
+        { $unwind: '$activities' },
+        {
+          $sort: {
+            'activities.mergedAt': -1,
+            'activities.solved_at': -1,
+          },
+        },
+        { $skip: skip },
+        { $limit: limit },
+      ])
+      .toArray();
+
+    return {
+      limit,
+      page,
+      docs: activities.map((item) => item.activities),
+    };
+  } catch (error) {
+    throw new ApiError(httpStatus.INTERNAL_SERVER_ERROR, 'Error fetching user activities');
+  }
+};
+
 module.exports = {
   queryUsers,
   getUserById,
   getUserByEmail,
+  getUserActivity,
   updateUserById,
   deleteUserById,
   createUser,

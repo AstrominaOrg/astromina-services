@@ -109,6 +109,7 @@ const getTopContributors = async (organizationName) => {
         contributorMap[key] = {
           login: assignee.login,
           id: assignee.id,
+          avatar_url: assignee.avatar_url,
           count: 1,
           bounty: issue.price,
         };

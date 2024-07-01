@@ -1,5 +1,8 @@
 const { ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
 const logger = require('../config/logger');
+const { getIssue } = require('./issue.service');
+const { getUser } = require('./user.service');
+const config = require('../config/config');
 
 /**
  * Creates a private thread with specified users and sends an initial message.
@@ -100,7 +103,6 @@ const createPaymentConfirmation = async ({ client, threadId, approvalMessage, us
     throw new Error('Invalid thread ID or the channel is not a thread.');
   }
 
-  // Check if the user is a member of the thread before sending the message
   const member = await thread.members.fetch(user.id);
   if (!member) {
     throw new Error('User is not a member of the thread.');
@@ -124,7 +126,7 @@ const createPaymentConfirmation = async ({ client, threadId, approvalMessage, us
  * @param {string} params.threadId - The ID of the thread where the message will be sent.
  * @param {string} params.message - The message to be sent in the thread.
  */
-const sendThreadMessage = async ({ client, threadId, message }) => {
+const sendThreadMessage = async ({ client, threadId, message, components }) => {
   const thread = await client.channels.fetch(threadId);
   if (!thread || !thread.isThread()) {
     throw new Error('Invalid thread ID or the channel is not a thread.');
@@ -132,7 +134,58 @@ const sendThreadMessage = async ({ client, threadId, message }) => {
 
   await thread.send({
     content: message,
+    components,
   });
+};
+
+const tryAddThreadMember = async ({ client, githubUsername, issue }) => {
+  const user = await getUser(githubUsername);
+
+  if (user && user.discord && user.discord.id !== null) {
+    const discordId = user.discord.id;
+    const userDB = await getIssue(issue.node_id);
+
+    if (userDB && userDB.thread && userDB.thread.id) {
+      await addThreadMember({ client, threadId: userDB.thread.id, userId: discordId });
+    }
+  }
+};
+
+const getAssigneeDiscordIds = async (assignees) => {
+  const userDiscordIds = await Promise.all(
+    assignees
+      .map(async (assignee) => {
+        const user = await getUser(assignee.login);
+        return user.discord.id;
+      })
+      .filter((discordId) => discordId !== null)
+  );
+  return userDiscordIds;
+};
+
+const getOrCreateThread = async ({ client, user, issue, price }) => {
+  let thread;
+
+  if (user && user.thread && user.thread.id) {
+    thread = user.thread;
+    await sendThreadMessage({
+      client,
+      threadId: thread.id,
+      message: `Price has been updated to $${price}`,
+    });
+  } else {
+    const userDiscordIds = await getAssigneeDiscordIds(issue.assignees);
+    thread = await createPrivateThread({
+      client,
+      channelId: config.discord.channelId,
+      threadName: `Issue #${issue.number}`,
+      initialMessage: `The issue #${issue.number} now marked as bounty with $${price} bounty. Assignees will be added to this thread when they are assigned to the issue.`,
+      ids: userDiscordIds,
+      reason: 'Issue marked as bounty',
+    });
+  }
+
+  return thread;
 };
 
 module.exports = {
@@ -141,4 +194,6 @@ module.exports = {
   createPrivateThread,
   sendThreadMessage,
   createPaymentConfirmation,
+  tryAddThreadMember,
+  getOrCreateThread,
 };

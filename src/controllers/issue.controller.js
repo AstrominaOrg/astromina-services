@@ -36,8 +36,8 @@ const getIssues = catchAsync(async (req, res) => {
     filter.owner = { login: req.query.ownerLogin };
   }
 
-  if (req.query.creatorLogin) {
-    filter.creator = { login: req.query.creatorLogin };
+  if (req.query.managerLogin) {
+    filter.managers = { login: req.query.managerLogin };
   }
 
   const options = pick(req.query, ['sortBy', 'limit', 'page']);

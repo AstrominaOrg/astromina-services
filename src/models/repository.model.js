@@ -61,6 +61,18 @@ const repositorySchema = new mongoose.Schema(
       type: Number,
       default: 0,
     },
+    totalIssue: {
+      type: Number,
+      default: 0,
+    },
+    totalRewardedBounty: {
+      type: Number,
+      default: 0,
+    },
+    totalAvailableBounty: {
+      type: Number,
+      default: 0,
+    },
   },
   {
     timestamps: true,

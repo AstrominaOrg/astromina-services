@@ -21,15 +21,13 @@ module.exports = (app) => {
   */
 
   app.on('issues.opened', async (context) => {
-    await IssueEventService.handleIssueCreate(context);
-    // await UserEventService.handleIssueStateChange(context);
+    IssueEventService.handleIssueCreate(context);
   });
 
   app.on(
     ['issues.closed', 'issues.deleted', 'issues.edited', 'issues.deleted', 'issues.labeled', 'issues.unlabeled'],
     async (context) => {
-      await IssueEventService.handleIssueChange(context);
-      // await UserEventService.handleIssueStateChange(context);
+      IssueEventService.handleIssueChange(context);
     }
   );
 
@@ -39,12 +37,10 @@ module.exports = (app) => {
 
   app.on('issues.assigned', async (context) => {
     await IssueEventService.handleAssigned(context);
-    // await UserEventService.handleIssueAssigned(context);
   });
 
   app.on('issues.unassigned', async (context) => {
-    await IssueEventService.handleUnassigned(context);
-    // await UserEventService.handleIssueAssigned(context);
+    IssueEventService.handleUnassigned(context);
   });
 
   app.on('issue_comment.created', async (context) => {

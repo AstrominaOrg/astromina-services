@@ -1,139 +1,31 @@
-const { createOrUpdateIssue, updateIssueByIssueId, deleteIssueByIssueId, getIssue } = require('../issue.service');
-const { createPrivateThread, addThreadMember, removeThreadMember, sendThreadMessage } = require('../discord.service');
+const { updateIssueByIssueId, deleteIssueByIssueId, getIssue } = require('../issue.service');
+const { removeThreadMember, tryAddThreadMember, getOrCreateThread } = require('../discord.service');
 const { getUser } = require('../user.service');
 const dcbot = require('../../dcbot');
-const config = require('../../config/config');
 const { wrapHandlerWithCheck } = require('./helper');
+const { saveIssue } = require('../../utils/issue.utils');
 
 async function handleIssueCreate(context) {
   const { issue, repository } = context.payload;
 
-  const { owner } = repository;
-
-  await createOrUpdateIssue({
-    issueId: issue.node_id,
-    number: issue.number,
-    title: issue.title,
-    url: issue.html_url,
-    description: issue.body,
-    assignees: issue.assignees.map((assignee) => {
-      return {
-        login: assignee.login,
-        id: assignee.id,
-      };
-    }),
-    repository: {
-      id: repository.node_id,
-      name: repository.name,
-    },
-    owner: {
-      login: owner.login,
-      avatar_url: owner.avatar_url,
-    },
-    creator: {
-      login: issue.user.login,
-      avatar_url: issue.user.avatar_url,
-    },
-    labels: issue.labels.map((label) => label.name),
-    state: issue.state,
-  });
+  await saveIssue(issue, repository);
 }
 
 async function handleIssueChange(context) {
   const { issue, repository } = context.payload;
 
-  const { owner } = repository;
-
-  await createOrUpdateIssue({
-    issueId: issue.node_id,
-    number: issue.number,
-    title: issue.title,
-    url: issue.html_url,
-    description: issue.body,
-    assignees: issue.assignees.map((assignee) => {
-      return {
-        login: assignee.login,
-        avatar_url: assignee.avatar_url,
-        id: assignee.id,
-      };
-    }),
-    repository: {
-      id: repository.node_id,
-      name: repository.name,
-    },
-    owner: {
-      login: owner.login,
-      avatar_url: owner.avatar_url,
-    },
-    creator: {
-      login: issue.user.login,
-      avatar_url: issue.user.avatar_url,
-    },
-    labels: issue.labels.map((label) => label.name),
-    state: issue.state,
-  });
+  await saveIssue(issue, repository);
 }
 
 async function handleAssigned(context) {
   const { issue, assignee, repository } = context.payload;
 
-  const { owner } = repository;
-
-  await createOrUpdateIssue({
-    issueId: issue.node_id,
-    number: issue.number,
-    title: issue.title,
-    url: issue.html_url,
-    description: issue.body,
-    assignees: issue.assignees.map((dev) => {
-      return {
-        login: dev.login,
-        avatar_url: dev.avatar_url,
-        id: dev.node_id,
-      };
-    }),
-    repository: {
-      id: repository.node_id,
-      name: repository.name,
-    },
-    owner: {
-      login: owner.login,
-      avatar_url: owner.avatar_url,
-    },
-    creator: {
-      login: issue.user.login,
-      avatar_url: issue.user.avatar_url,
-    },
-    labels: issue.labels.map((label) => label.name),
-    state: issue.state,
-  });
-
-  const user = await getUser(assignee.login);
-
-  if (user && user.discord && user.discord.id !== null) {
-    const discordId = user.discord.id;
-    const userDB = await getIssue(issue.node_id);
-
-    if (userDB && userDB.thread && userDB.thread.id) {
-      await addThreadMember({ client: dcbot, threadId: userDB.thread.id, userId: discordId });
-    }
-  }
-
-  const creator = await getUser(issue.user.login);
-
-  if (creator && creator.discord && creator.discord.id !== null) {
-    const discordId = creator.discord.id;
-    const userDB = await getIssue(issue.node_id);
-
-    if (userDB && userDB.thread && userDB.thread.id) {
-      await addThreadMember({ client: dcbot, threadId: userDB.thread.id, userId: discordId });
-    }
-  }
+  await saveIssue(issue, repository);
+  tryAddThreadMember({ client: dcbot, issue, githubUsername: assignee.login });
 }
 
 async function handleUnassigned(context) {
-  const { issue, assignee } = context.payload;
-
+  const { issue, assignee, repository } = context.payload;
   const user = await getUser(assignee.login);
 
   if (user && user.discord && user.discord.id) {
@@ -144,15 +36,7 @@ async function handleUnassigned(context) {
       await removeThreadMember({ client: dcbot, threadId: userDB.thread.id, userId: discordId });
     }
 
-    await createOrUpdateIssue({
-      issueId: issue.node_id,
-      assignees: issue.assignees.map((dev) => {
-        return {
-          login: dev.login,
-          id: dev.id,
-        };
-      }),
-    });
+    await saveIssue(issue, repository);
   }
 }
 
@@ -180,35 +64,9 @@ async function handlePriceCommand(context) {
 
   await updateIssueByIssueId(issueId, { price });
   // await sendComment(context, `Price has been updated to $${price}`);
+
   const userDB = await getIssue(issueId);
-  let thread;
-
-  if (userDB && userDB.thread && userDB.thread.id) {
-    thread = userDB.thread;
-    await sendThreadMessage({
-      client: dcbot,
-      threadId: thread.id,
-      message: `Price has been updated to $${price}`,
-    });
-  } else {
-    const userDiscordIds = await Promise.all(
-      issue.assignees
-        .map(async (assignee) => {
-          const user = await getUser(assignee.login);
-          return user.discord.id;
-        })
-        .filter((discordId) => discordId !== null)
-    );
-
-    thread = await createPrivateThread({
-      client: dcbot,
-      channelId: config.discord.channelId,
-      threadName: `Issue #${issue.number}`,
-      initialMessage: `The issue #${issue.number} now marked as bounty with $${price} bounty. Assignees will be added to this thread when they are assigned to the issue.`,
-      ids: userDiscordIds,
-      reason: 'Issue marked as bounty',
-    });
-  }
+  const thread = await getOrCreateThread({ client: dcbot, user: userDB, issue, price });
 
   await updateIssueByIssueId(issueId, {
     thread: {

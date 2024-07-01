@@ -1,52 +1,18 @@
-const { createOrUpdatePullRequest } = require('../pr.service');
 const { getLinkedIssues } = require('../github.service');
 const { wrapHandlerWithCheck } = require('./helper');
 const { createOrUpdateIssue, getIssueByIssueNumberAndRepositoryId } = require('../issue.service');
 const { sendThreadMessage } = require('../discord.service');
 const dcbot = require('../../dcbot');
+const { savePullRequest } = require('../../utils/pr.utils');
 
 async function handlePullRequestCreate(context) {
   const { pull_request: pullRequest, repository } = context.payload;
-  const linkedIssues = await getLinkedIssues(repository.name, repository.owner.login, pullRequest.number, 5);
+  let linkedIssues = await getLinkedIssues(repository.name, repository.owner.login, pullRequest.number, 5);
+  linkedIssues = linkedIssues.repository.pullRequest.closingIssuesReferences.nodes.map((issue) => issue.number);
 
-  await createOrUpdatePullRequest({
-    pullRequestId: pullRequest.node_id,
-    number: pullRequest.number,
-    title: pullRequest.title,
-    body: pullRequest.body,
-    url: pullRequest.html_url,
-    repository: {
-      id: repository.node_id,
-      name: repository.name,
-    },
-    assignees: pullRequest.assignees.map((assignee) => {
-      return {
-        login: assignee.login,
-        avatar_url: assignee.avatar_url,
-      };
-    }),
-    requestedReviewers: pullRequest.requested_reviewers.map((reviewer) => {
-      return {
-        login: reviewer.login,
-        avatar_url: reviewer.avatar_url,
-      };
-    }),
-    linkedIssues: linkedIssues.repository.pullRequest.closingIssuesReferences.nodes.map((issue) => issue.number),
-    state: pullRequest.state,
-    labels: pullRequest.labels.map((label) => label.name),
-    creator: {
-      login: pullRequest.user.login,
-      avatar_url: pullRequest.user.avatar_url,
-    },
-    merged: pullRequest.merged,
-    commits: pullRequest.commits,
-    comments: pullRequest.comments,
-    reviewComments: pullRequest.review_comments,
-    maintainerCanModify: pullRequest.maintainer_can_modify,
-    mergeable: pullRequest.mergeable,
-    authorAssociation: pullRequest.author_association,
-    draft: pullRequest.draft,
-  });
+  pullRequest.author = pullRequest.user;
+
+  await savePullRequest(pullRequest, repository, linkedIssues);
 }
 
 async function handlePullRequestEdit() {
@@ -55,12 +21,13 @@ async function handlePullRequestEdit() {
 
 async function handlePullRequestClose(context) {
   const { pull_request: pullRequest, repository } = context.payload;
-  const linkedIssues = await getLinkedIssues(repository.name, repository.owner.login, pullRequest.number, 5);
+  let linkedIssues = await getLinkedIssues(repository.name, repository.owner.login, pullRequest.number, 5);
+  linkedIssues = linkedIssues.repository.pullRequest.closingIssuesReferences.nodes.map((issue) => issue.number);
 
   if (pullRequest.merged) {
-    linkedIssues.repository.pullRequest.closingIssuesReferences.nodes.forEach(async (issue) => {
+    linkedIssues.forEach(async (issue) => {
       const issueDB = await getIssueByIssueNumberAndRepositoryId(issue.number, repository.node_id);
-      if (issueDB) {
+      if (issueDB && issueDB.thread.id) {
         await createOrUpdateIssue({
           issueId: issueDB.issueId,
           solved: true,
@@ -75,42 +42,32 @@ async function handlePullRequestClose(context) {
             .map((assignee) => `[${assignee.login}](https://github.com/${assignee.login})`)
             .join(', ')}`,
         });
+
+        const button = {
+          type: 2,
+          style: 3,
+          label: 'Confirm you received the reward',
+          custom_id: `received_reward_${issueDB.issueId}`,
+        };
+
+        await sendThreadMessage({
+          client: dcbot,
+          threadId: issueDB.thread.id,
+          message: 'Please confirm you received the reward by clicking the button below.',
+          components: [
+            {
+              type: 1,
+              components: [button],
+            },
+          ],
+        });
       }
     });
   }
 
-  await createOrUpdatePullRequest({
-    pullRequestId: pullRequest.node_id,
-    title: pullRequest.title,
-    body: pullRequest.body,
-    repository: {
-      id: repository.node_id,
-      name: repository.name,
-    },
-    assignees: pullRequest.assignees.map((assignee) => {
-      return {
-        login: assignee.login,
-        avatar_url: assignee.avatar_url,
-      };
-    }),
-    requestedReviewers: pullRequest.requested_reviewers.map((reviewer) => {
-      return {
-        login: reviewer.login,
-        avatar_url: reviewer.avatar_url,
-      };
-    }),
-    url: pullRequest.html_url,
-    linkedIssues: linkedIssues.repository.pullRequest.closingIssuesReferences.nodes.map((issue) => issue.number),
-    state: pullRequest.state,
-    labels: pullRequest.labels.map((label) => label.name),
-    merged: pullRequest.merged,
-    commits: pullRequest.commits,
-    comments: pullRequest.comments,
-    reviewComments: pullRequest.review_comments,
-    maintainerCanModify: pullRequest.maintainer_can_modify,
-    mergeable: pullRequest.mergeable,
-    draft: pullRequest.draft,
-  });
+  pullRequest.author = pullRequest.user;
+
+  await savePullRequest(pullRequest, repository, linkedIssues);
 }
 
 async function handlePullRequestReopen() {

@@ -52,6 +52,9 @@ const pullRequestScheme = new mongoose.Schema(
           login: {
             type: String,
           },
+          avatar_url: {
+            type: String,
+          },
         },
       ],
       default: [],
@@ -69,11 +72,18 @@ const pullRequestScheme = new mongoose.Schema(
       type: [String],
       default: [],
     },
-    creator: {
-      login: {
-        type: String,
-        required: true,
-      },
+    managers: {
+      type: [
+        {
+          login: {
+            type: String,
+            required: true,
+          },
+          avatar_url: {
+            type: String,
+          },
+        },
+      ],
     },
     merged: {
       type: Boolean,

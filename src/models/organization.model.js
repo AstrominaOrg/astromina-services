@@ -27,6 +27,28 @@ const organizationSchema = new mongoose.Schema(
       enum: ['pending', 'accepted', 'rejected'],
       required: true,
     },
+    socials: {
+      twitter: {
+        url: {
+          type: String,
+        },
+      },
+      website: {
+        url: {
+          type: String,
+        },
+      },
+      discord: {
+        url: {
+          type: String,
+        },
+      },
+      telegram: {
+        url: {
+          type: String,
+        },
+      },
+    },
     members: {
       type: [
         {
@@ -70,6 +92,18 @@ const organizationSchema = new mongoose.Schema(
         },
       ],
       default: [],
+    },
+    totalIssue: {
+      type: Number,
+      default: 0,
+    },
+    totalRewardedBounty: {
+      type: Number,
+      default: 0,
+    },
+    totalAvailableBounty: {
+      type: Number,
+      default: 0,
     },
   },
   {

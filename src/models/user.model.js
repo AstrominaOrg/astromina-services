@@ -2,48 +2,6 @@ const mongoose = require('mongoose');
 const validator = require('validator');
 const { toJSON, paginate } = require('./plugins');
 
-// const subIssueSchema = new mongoose.Schema({
-//   issueId: {
-//     type: String,
-//     required: true,
-//   },
-//   number: {
-//     type: Number,
-//     required: true,
-//   },
-//   title: {
-//     type: String,
-//     required: true,
-//   },
-//   created_at: {
-//     type: Date,
-//     default: Date.now,
-//   },
-//   url: {
-//     type: String,
-//     required: true,
-//   },
-//   creator: {
-//     type: String,
-//     required: true,
-//   },
-//   price: {
-//     type: Number,
-//     default: 0,
-//   },
-//   thread: {
-//     id: {
-//       type: String,
-//     },
-//     name: {
-//       type: String,
-//     },
-//     members: {
-//       type: [String],
-//     },
-//   },
-// });
-
 const userSchema = mongoose.Schema(
   {
     name: {
@@ -105,11 +63,28 @@ const userSchema = mongoose.Schema(
       type: Number,
       default: -1,
     },
-    // issues: {
-    //   assigned: [subIssueSchema],
-    //   solved: [subIssueSchema],
-    //   closed: [subIssueSchema],
-    // },
+    socials: {
+      twitter: {
+        url: {
+          type: String,
+        },
+      },
+      website: {
+        url: {
+          type: String,
+        },
+      },
+      discord: {
+        url: {
+          type: String,
+        },
+      },
+      telegram: {
+        url: {
+          type: String,
+        },
+      },
+    },
   },
   {
     timestamps: true,

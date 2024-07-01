@@ -1,5 +1,6 @@
 const mongoose = require('mongoose');
 const { toJSON, paginate } = require('./plugins');
+const { updateRepositoryStats, updateOrganizationStats } = require('../utils/mongo');
 
 const issueSchema = new mongoose.Schema(
   {
@@ -59,15 +60,18 @@ const issueSchema = new mongoose.Schema(
         required: true,
       },
     },
-    creator: {
-      login: {
-        type: String,
-        required: true,
-      },
-      avatar_url: {
-        type: String,
-        required: true,
-      },
+    managers: {
+      type: [
+        {
+          login: {
+            type: String,
+          },
+          avatar_url: {
+            type: String,
+          },
+        },
+      ],
+      default: [],
     },
     state: {
       type: String,
@@ -97,6 +101,9 @@ const issueSchema = new mongoose.Schema(
         type: [String],
       },
     },
+    solved_at: {
+      type: Date,
+    },
   },
   {
     timestamps: true,
@@ -106,6 +113,26 @@ const issueSchema = new mongoose.Schema(
 issueSchema.plugin(toJSON);
 issueSchema.plugin(paginate);
 issueSchema.index({ issueId: 1 }, { unique: true });
+
+issueSchema.post('save', async function () {
+  await updateRepositoryStats(this.repository.id);
+  await updateOrganizationStats(this.owner.login);
+});
+
+issueSchema.post('remove', async function () {
+  await updateRepositoryStats(this.repository.id);
+  await updateOrganizationStats(this.owner.login);
+});
+
+issueSchema.post('updateOne', async function () {
+  await updateRepositoryStats(this.repository.id);
+  await updateOrganizationStats(this.owner.login);
+});
+
+issueSchema.post('deleteOne', async function () {
+  await updateRepositoryStats(this.repository.id);
+  await updateOrganizationStats(this.owner.login);
+});
 
 /**
  * @typedef Issue

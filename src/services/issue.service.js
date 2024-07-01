@@ -98,6 +98,14 @@ async function createOrUpdateIssue(issueBody) {
   return createIssue(issueBody);
 }
 
+async function markIssueAsSolved(issueId) {
+  return updateIssueByIssueId(issueId, { solved: true, solved_at: new Date() });
+}
+
+async function updatePrice(issueId, price) {
+  return updateIssueByIssueId(issueId, { price });
+}
+
 module.exports = {
   createIssue,
   queryIssues,
@@ -105,7 +113,9 @@ module.exports = {
   getIssueByIssueNumberAndRepositoryId,
   getIssueByOwnerAndRepoAndIssueNumber,
   getIssue,
+  markIssueAsSolved,
   updateIssueByIssueId,
   deleteIssueByIssueId,
   createOrUpdateIssue,
+  updatePrice,
 };
