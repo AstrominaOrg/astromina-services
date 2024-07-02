@@ -6,10 +6,13 @@ services:
     image: node-app
     environment:
       - MONGODB_URL=mongodb://mongodb:27017/astromina-db
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
     ports:
       - '3000:3000'
     depends_on:
       - mongodb
+      - redis
     volumes:
       - .:/usr/src/node-app
     networks:
@@ -21,6 +24,13 @@ services:
       - '27017:27017'
     volumes:
       - dbdata:/data/db
+    networks:
+      - node-network
+
+  redis:
+    image: redis:alpine
+    ports:
+      - '6379:6379'
     networks:
       - node-network
 
