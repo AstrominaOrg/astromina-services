@@ -9,6 +9,7 @@ const { createOrUpdateRepository } = require('./repository.service');
 const { createOrUpdateOrganization } = require('./organization.service');
 const { saveIssue } = require('../utils/issue.utils');
 const { savePullRequest } = require('../utils/pr.utils');
+const mongoose = require('mongoose');
 
 const linkedIssuesQuery = `
 query getLinkedIssues(
@@ -463,6 +464,11 @@ const recoverOrganization = async (name) => {
   if (!octokitInstance) {
     await initializeOctokit();
   }
+
+  await mongoose.connection.db.dropCollection('issues');
+  await mongoose.connection.db.dropCollection('pullrequests');
+  await mongoose.connection.db.dropCollection('repositories');
+  await mongoose.connection.db.dropCollection('organizations');
 
   const organization = await getOrganization(name);
   createOrUpdateOrganization({
