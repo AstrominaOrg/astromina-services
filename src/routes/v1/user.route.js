@@ -9,7 +9,12 @@ const router = express.Router();
 
 router.route('/').get(validate(userValidation.getUsers), userController.getUsers);
 
+// Auth routes
 router.route('/me').get(auth('getProfile'), userController.getMe);
+router.route('/my-projects').get(auth('getProfile'), userController.getMyProjects);
+router.route('/my-managed-issues').get(auth('getProfile'), userController.getMyManagedIssues);
+
+// Public routes
 router.route('/:username').get(validate(userValidation.getUser), userController.getUser);
 router.route('/:username/github').get(validate(userValidation.getUser), cache, userController.getUserGithubActivity);
 router.route('/:username/activity').get(validate(userValidation.getUser), userController.getUserActivity);

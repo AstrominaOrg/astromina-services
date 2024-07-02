@@ -94,6 +94,15 @@ const createUser = async (profile) => {
       photos: profile.photos.map((photo) => photo.value),
       company: profile._json.company,
       bio: profile._json.bio,
+      avatar_url: profile._json.avatar_url,
+    },
+    socials: {
+      twitter: {
+        url: `https://x.com/${profile.username}`,
+      },
+      website: {
+        url: profile._json.blog,
+      },
     },
   });
 };
@@ -201,6 +210,7 @@ const getContributedProjects = async (username) => {
         },
         count: { $sum: 1 },
         bounty: { $sum: '$price' },
+        avatar_url: { $first: '$owner.avatar_url' },
       },
     },
     {
@@ -211,6 +221,7 @@ const getContributedProjects = async (username) => {
             repositoryName: '$_id.repositoryName',
             count: '$count',
             bounty: '$bounty',
+            avatar_url: '$avatar_url',
           },
         },
         totalIssues: { $sum: '$count' },
@@ -286,6 +297,17 @@ const getUserActivity = async (username, page = 1, limit = 10) => {
   }
 };
 
+const getManagedIssues = async (username, options) => {
+  const user = await getUser(username);
+  if (!user) {
+    throw new ApiError(httpStatus.NOT_FOUND, 'User not found');
+  }
+
+  const managedIssues = Issue.paginate({ 'managers.login': username }, options);
+
+  return managedIssues;
+};
+
 module.exports = {
   queryUsers,
   getUserById,
@@ -295,6 +317,7 @@ module.exports = {
   deleteUserById,
   createUser,
   getUserByDiscordId,
+  getManagedIssues,
   getUser,
   addIssue,
   getContributedProjects,

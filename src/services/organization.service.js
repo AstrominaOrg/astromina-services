@@ -1,6 +1,7 @@
 const httpStatus = require('http-status');
 const { Organization, Issue } = require('../models');
 const ApiError = require('../utils/ApiError');
+const { getUser } = require('./user.service');
 
 /**
  * Create an organization
@@ -154,6 +155,17 @@ const createOrUpdateOrganization = async (organizationBody) => {
   return createOrganization(organizationBody);
 };
 
+const getManagedProjects = async (username, options) => {
+  const user = await getUser(username);
+  if (!user) {
+    throw new ApiError(httpStatus.NOT_FOUND, 'User not found');
+  }
+
+  const organizations = await Organization.paginate({ 'members.login': username }, options);
+
+  return organizations;
+};
+
 module.exports = {
   createOrUpdateOrganization,
   createOrganization,
@@ -162,6 +174,7 @@ module.exports = {
   getBountyTotals,
   updateOrganizationMembers,
   getOrganization,
+  getManagedProjects,
   getOrganizationByName,
   updateOrganizationById,
   deleteOrganizationById,
