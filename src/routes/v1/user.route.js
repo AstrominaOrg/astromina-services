@@ -1,5 +1,5 @@
 const express = require('express');
-const auth = require('../../middlewares/auth');
+const { auth } = require('../../middlewares/auth');
 const validate = require('../../middlewares/validate');
 const userValidation = require('../../validations/user.validation');
 const userController = require('../../controllers/user.controller');
@@ -13,6 +13,9 @@ router.route('/').get(validate(userValidation.getUsers), userController.getUsers
 router.route('/me').get(auth('getProfile'), userController.getMe);
 router.route('/my-projects').get(auth('getProfile'), userController.getMyProjects);
 router.route('/my-managed-issues').get(auth('getProfile'), userController.getMyManagedIssues);
+router
+  .route('/update-profile')
+  .patch(auth('updateProfile'), validate(userValidation.updateProfile), userController.updateProfile);
 
 // Public routes
 router.route('/:username').get(validate(userValidation.getUser), userController.getUser);

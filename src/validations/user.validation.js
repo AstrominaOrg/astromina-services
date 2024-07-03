@@ -21,8 +21,30 @@ const getContributedProjects = {
   }),
 };
 
+const updateProfile = {
+  body: Joi.object().keys({
+    bio: Joi.string(),
+    twitter: Joi.object().keys({
+      url: Joi.string(),
+    }),
+    website: Joi.object().keys({
+      url: Joi.string(),
+    }),
+    telegram: Joi.object().keys({
+      url: Joi.string(),
+    }),
+    linkedin: Joi.object().keys({
+      url: Joi.string(),
+    }),
+    availableDays: Joi.number(),
+    location: Joi.string(),
+    skills: Joi.array().items(Joi.string()),
+  }),
+};
+
 module.exports = {
   getContributedProjects,
+  updateProfile,
   getUsers,
   getUser,
 };

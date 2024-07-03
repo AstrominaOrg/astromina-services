@@ -27,26 +27,24 @@ const organizationSchema = new mongoose.Schema(
       enum: ['pending', 'accepted', 'rejected'],
       required: true,
     },
-    socials: {
-      twitter: {
-        url: {
-          type: String,
-        },
+    twitter: {
+      url: {
+        type: String,
       },
-      website: {
-        url: {
-          type: String,
-        },
+    },
+    website: {
+      url: {
+        type: String,
       },
-      discord: {
-        url: {
-          type: String,
-        },
+    },
+    discord: {
+      url: {
+        type: String,
       },
-      telegram: {
-        url: {
-          type: String,
-        },
+    },
+    telegram: {
+      url: {
+        type: String,
       },
     },
     members: {

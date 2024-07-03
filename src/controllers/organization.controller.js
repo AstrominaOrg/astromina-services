@@ -37,9 +37,15 @@ const getBountyTotals = catchAsync(async (req, res) => {
   res.send({ totalRewarded, totalActive });
 });
 
+const updateProfile = catchAsync(async (req, res) => {
+  const organization = await organizationService.updateProfile(req.params.organizationName, req.body);
+  res.send(organization);
+});
+
 module.exports = {
   getTopContributors,
   getBountyTotals,
+  updateProfile,
   getOrganizations,
   getOrganization,
   getOrganizationByName,

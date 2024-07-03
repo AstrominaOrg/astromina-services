@@ -9,6 +9,10 @@ const userSchema = mongoose.Schema(
       required: true,
       trim: true,
     },
+    bio: {
+      type: String,
+      trim: true,
+    },
     email: {
       type: String,
       required: true,
@@ -44,10 +48,6 @@ const userSchema = mongoose.Schema(
         type: String,
         trim: true,
       },
-      bio: {
-        type: String,
-        trim: true,
-      },
       avatar_url: {
         type: String,
         required: true,
@@ -58,32 +58,40 @@ const userSchema = mongoose.Schema(
         type: String,
         unique: true,
       },
+      username: {
+        type: String,
+      },
     },
     availableDays: {
       type: Number,
       default: -1,
     },
-    socials: {
-      twitter: {
-        url: {
-          type: String,
-        },
+    twitter: {
+      url: {
+        type: String,
       },
-      website: {
-        url: {
-          type: String,
-        },
+    },
+    website: {
+      url: {
+        type: String,
       },
-      discord: {
-        url: {
-          type: String,
-        },
+    },
+    telegram: {
+      url: {
+        type: String,
       },
-      telegram: {
-        url: {
-          type: String,
-        },
+    },
+    linkedin: {
+      url: {
+        type: String,
       },
+    },
+    location: {
+      type: String,
+      trim: true,
+    },
+    skills: {
+      type: [String],
     },
   },
   {

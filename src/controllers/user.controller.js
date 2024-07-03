@@ -52,11 +52,17 @@ const getMyManagedIssues = catchAsync(async (req, res) => {
   res.send(result);
 });
 
+const updateProfile = catchAsync(async (req, res) => {
+  const user = await userService.updateProfile(req.authUser.github.username, req.body);
+  res.send(user);
+});
+
 module.exports = {
   getContributedProjects,
   getUserGithubActivity,
   getMyManagedIssues,
   getUserActivity,
+  updateProfile,
   getMyProjects,
   getUsers,
   getUser,

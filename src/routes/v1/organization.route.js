@@ -1,5 +1,5 @@
 const express = require('express');
-// const auth = require('../../middlewares/auth');
+const { auth, organizationMember } = require('../../middlewares/auth');
 const validate = require('../../middlewares/validate');
 const organizationValidation = require('../../validations/organization.validation');
 const organizationController = require('../../controllers/organization.controller');
@@ -21,4 +21,12 @@ router
   .route('/:organizationName/bounty-totals')
   .get(validate(organizationValidation.getBountyTotals), organizationController.getBountyTotals);
 
+router
+  .route('/:organizationName/update-profile')
+  .patch(
+    auth('updateProfile'),
+    organizationMember,
+    validate(organizationValidation.updateProfile),
+    organizationController.updateProfile
+  );
 module.exports = router;

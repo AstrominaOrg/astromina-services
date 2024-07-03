@@ -35,6 +35,10 @@ const getUserByEmail = async (email) => {
   return User.findOne({ email });
 };
 
+const getUser = async (username) => {
+  return User.findOne({ 'github.username': username });
+};
+
 /**
  * Update user by id
  * @param {ObjectId} userId
@@ -48,6 +52,16 @@ const updateUserById = async (userId, updateBody) => {
   }
   if (updateBody.email && (await User.isEmailTaken(updateBody.email, userId))) {
     throw new ApiError(httpStatus.BAD_REQUEST, 'Email already taken');
+  }
+  Object.assign(user, updateBody);
+  await user.save();
+  return user;
+};
+
+const updateProfile = async (username, updateBody) => {
+  const user = await getUser(username);
+  if (!user) {
+    throw new ApiError(httpStatus.NOT_FOUND, 'User not found');
   }
   Object.assign(user, updateBody);
   await user.save();
@@ -68,10 +82,6 @@ const deleteUserById = async (userId) => {
   return user;
 };
 
-const getUser = async (username) => {
-  return User.findOne({ 'github.username': username });
-};
-
 /**
  * Create or update user by githubId
  * @param {Object} profile
@@ -87,22 +97,20 @@ const createUser = async (profile) => {
   return User.create({
     name: profile.displayName || profile.username,
     email: profile._json.email,
+    bio: profile._json.bio,
     github: {
       id: profile.nodeId,
       username: profile.username,
       emails: profile.emails.map((email) => email.value),
       photos: profile.photos.map((photo) => photo.value),
       company: profile._json.company,
-      bio: profile._json.bio,
       avatar_url: profile._json.avatar_url,
     },
-    socials: {
-      twitter: {
-        url: `https://x.com/${profile.username}`,
-      },
-      website: {
-        url: profile._json.blog,
-      },
+    twitter: {
+      url: `https://x.com/${profile.username}`,
+    },
+    website: {
+      url: profile._json.blog,
     },
   });
 };
@@ -122,6 +130,7 @@ const updateUserDiscordByUserId = async (userId, profile) => {
 
   user.discord = {
     id: profile.id,
+    username: profile.username,
   };
 
   await user.save();
@@ -309,17 +318,18 @@ const getManagedIssues = async (username, options) => {
 };
 
 module.exports = {
-  queryUsers,
-  getUserById,
-  getUserByEmail,
-  getUserActivity,
-  updateUserById,
-  deleteUserById,
-  createUser,
-  getUserByDiscordId,
-  getManagedIssues,
   getUser,
   addIssue,
+  queryUsers,
+  createUser,
+  getUserById,
+  updateProfile,
+  updateUserById,
+  deleteUserById,
+  getUserByEmail,
+  getUserActivity,
+  getManagedIssues,
+  getUserByDiscordId,
   getContributedProjects,
   updateUserDiscordByUserId,
 };

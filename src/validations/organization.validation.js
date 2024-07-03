@@ -29,9 +29,31 @@ const getBountyTotals = {
   }),
 };
 
+const updateProfile = {
+  body: Joi.object().keys({
+    description: Joi.string(),
+    twitter: Joi.object().keys({
+      url: Joi.string(),
+    }),
+    website: Joi.object().keys({
+      url: Joi.string(),
+    }),
+    telegram: Joi.object().keys({
+      url: Joi.string(),
+    }),
+    linkedin: Joi.object().keys({
+      url: Joi.string(),
+    }),
+    discord: Joi.object().keys({
+      url: Joi.string(),
+    }),
+  }),
+};
+
 module.exports = {
-  getOrganizations,
-  getOrganization,
-  getTopContributors,
+  updateProfile,
   getBountyTotals,
+  getOrganization,
+  getOrganizations,
+  getTopContributors,
 };

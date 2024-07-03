@@ -50,6 +50,16 @@ const updateOrganizationById = async (organizationId, updateBody) => {
   return organization;
 };
 
+const updateProfile = async (organizationName, updateBody) => {
+  const organization = await getOrganizationByName(organizationName);
+  if (!organization) {
+    throw new ApiError(httpStatus.NOT_FOUND, 'Organization not found');
+  }
+  Object.assign(organization, updateBody);
+  await organization.save();
+  return organization;
+};
+
 /**
  * Delete organization by id
  * @param {ObjectId} organizationId
@@ -166,16 +176,27 @@ const getManagedProjects = async (username, options) => {
   return organizations;
 };
 
+const isMember = async (organizationName, username) => {
+  const organization = await getOrganizationByName(organizationName);
+  if (!organization) {
+    return false;
+  }
+
+  return organization.members.some((member) => member.login === username);
+};
+
 module.exports = {
-  createOrUpdateOrganization,
-  createOrganization,
-  queryOrganizations,
-  getTopContributors,
-  getBountyTotals,
-  updateOrganizationMembers,
+  isMember,
+  updateProfile,
   getOrganization,
+  getBountyTotals,
+  getTopContributors,
+  queryOrganizations,
   getManagedProjects,
+  createOrganization,
   getOrganizationByName,
   updateOrganizationById,
   deleteOrganizationById,
+  updateOrganizationMembers,
+  createOrUpdateOrganization,
 };
