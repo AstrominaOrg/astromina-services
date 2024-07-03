@@ -1,9 +1,10 @@
-const { updateIssueByIssueId, deleteIssueByIssueId, getIssue } = require('../issue.service');
+const { updateIssue, deleteIssue, getIssue } = require('../issue.service');
 const { removeThreadMember, tryAddThreadMember, getOrCreateThread } = require('../discord.service');
 const { getUser } = require('../user.service');
 const dcbot = require('../../dcbot');
 const { wrapHandlerWithCheck } = require('./helper');
 const { saveIssue } = require('../../utils/issue.utils');
+const { isMember } = require('../organization.service');
 
 async function handleIssueCreate(context) {
   const { issue, repository } = context.payload;
@@ -43,32 +44,34 @@ async function handleUnassigned(context) {
 async function handleIssueTransfer(context) {
   const { issue } = context.payload;
 
-  await deleteIssueByIssueId(issue.node_id);
+  await deleteIssue(issue.node_id);
 }
 
 async function handlePriceCommand(context) {
-  const { comment } = context.payload;
+  const { comment, issue, sender, repository } = context.payload;
 
   if (!comment.body.startsWith('/price')) {
     return;
   }
   const price = comment.body.split(' ')[1];
-  const issueId = context.payload.issue.node_id;
-  const sender = context.payload.sender.login;
-  const issue = await getIssue(issueId);
 
-  if (issue.creator.login !== sender) {
-    // await sendComment(context, 'You are not allowed to update the price');
+  if (!price || price < 0) {
     return;
   }
 
-  await updateIssueByIssueId(issueId, { price });
+  if (!isMember(repository.owner.login, sender.login)) {
+    return;
+  }
+
+  const issueId = issue.node_id;
+
+  await updateIssue(issueId, { price });
   // await sendComment(context, `Price has been updated to $${price}`);
 
   const userDB = await getIssue(issueId);
   const thread = await getOrCreateThread({ client: dcbot, user: userDB, issue, price });
 
-  await updateIssueByIssueId(issueId, {
+  await updateIssue(issueId, {
     thread: {
       id: thread.id,
       name: thread.name,

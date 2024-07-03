@@ -3,7 +3,6 @@ const pick = require('../utils/pick');
 const ApiError = require('../utils/ApiError');
 const catchAsync = require('../utils/catchAsync');
 const { issueService } = require('../services');
-const { set } = require('../config/redis');
 
 const getIssues = catchAsync(async (req, res) => {
   const filter = pick(req.query, [
@@ -14,6 +13,7 @@ const getIssues = catchAsync(async (req, res) => {
     'repositoryId',
     'state',
     'solved',
+    'rewarded',
     'labels',
     'assignees',
   ]);
@@ -40,10 +40,18 @@ const getIssues = catchAsync(async (req, res) => {
     filter.managers = { login: req.query.managerLogin };
   }
 
+  if (req.query.untouched) {
+    filter.assignees = { $size: 0 };
+  }
+
+  if (req.query.repositoryId) {
+    filter.repository = { id: req.query.repositoryId };
+  }
+
   const options = pick(req.query, ['sortBy', 'limit', 'page']);
+  options.select = '-thread';
   const result = await issueService.queryIssues(filter, options);
 
-  await set(req.originalUrl, result, 60);
   res.send(result);
 });
 

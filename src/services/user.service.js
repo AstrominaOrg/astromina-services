@@ -1,5 +1,4 @@
 const httpStatus = require('http-status');
-const mongoose = require('mongoose');
 const { User, Issue } = require('../models');
 const ApiError = require('../utils/ApiError');
 
@@ -261,51 +260,6 @@ const getContributedProjects = async (username) => {
   };
 };
 
-const getUserActivity = async (username, page = 1, limit = 10) => {
-  try {
-    const skip = (page - 1) * limit;
-
-    const activities = await mongoose.connection.db
-      .collection('issues')
-      .aggregate([
-        {
-          $facet: {
-            pullRequests: [
-              { $match: { 'assignees.login': username, merged: true } },
-              { $addFields: { type: 'pullRequest' } },
-            ],
-            issues: [{ $match: { 'assignees.login': username, solved: true } }, { $addFields: { type: 'issue' } }],
-          },
-        },
-        {
-          $project: {
-            activities: {
-              $concatArrays: ['$pullRequests', '$issues'],
-            },
-          },
-        },
-        { $unwind: '$activities' },
-        {
-          $sort: {
-            'activities.mergedAt': -1,
-            'activities.solved_at': -1,
-          },
-        },
-        { $skip: skip },
-        { $limit: limit },
-      ])
-      .toArray();
-
-    return {
-      limit,
-      page,
-      docs: activities.map((item) => item.activities),
-    };
-  } catch (error) {
-    throw new ApiError(httpStatus.INTERNAL_SERVER_ERROR, 'Error fetching user activities');
-  }
-};
-
 const getManagedIssues = async (username, options) => {
   const user = await getUser(username);
   if (!user) {
@@ -315,6 +269,39 @@ const getManagedIssues = async (username, options) => {
   const managedIssues = Issue.paginate({ 'managers.login': username }, options);
 
   return managedIssues;
+};
+
+const markUserAsRewarded = async (id, issueId) => {
+  const user = await getUserByDiscordId(id);
+  if (!user) {
+    throw new ApiError(httpStatus.NOT_FOUND, 'User not found');
+  }
+  const issue = await Issue.findOne({ issueId });
+  if (!issue) {
+    throw new ApiError(httpStatus.NOT_FOUND, 'Issue not found');
+  }
+  const isAssigned = issue.assignees.find((assignee) => assignee.login === user.github.username);
+  if (!isAssigned) {
+    throw new ApiError(httpStatus.BAD_REQUEST, 'User is not assigned to issue');
+  }
+  const isSolved = issue.solved;
+  if (!isSolved) {
+    throw new ApiError(httpStatus.BAD_REQUEST, 'Issue is not solved');
+  }
+  const isRewarded = issue.assignees.find((assignee) => assignee.login === user.github.username && assignee.rewarded);
+  if (isRewarded) {
+    throw new ApiError(httpStatus.BAD_REQUEST, 'User already rewarded');
+  }
+
+  const assignee = issue.assignees.find((dev) => dev.login === user.github.username);
+  assignee.rewarded = true;
+
+  const allAssigneesRewarded = issue.assignees.every((dev) => dev.rewarded);
+  if (allAssigneesRewarded) {
+    issue.rewarded = true;
+  }
+
+  await issue.save();
 };
 
 module.exports = {
@@ -327,8 +314,8 @@ module.exports = {
   updateUserById,
   deleteUserById,
   getUserByEmail,
-  getUserActivity,
   getManagedIssues,
+  markUserAsRewarded,
   getUserByDiscordId,
   getContributedProjects,
   updateUserDiscordByUserId,

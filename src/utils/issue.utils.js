@@ -13,6 +13,7 @@ const saveIssue = async (issue, repository) => {
       login: assignee.login,
       id: assignee.id,
       avatar_url: assignee.avatar_url || assignee.avatarUrl,
+      rewarded: false,
     })),
     repository: {
       id: repository.node_id || repository.id,
@@ -24,8 +25,8 @@ const saveIssue = async (issue, repository) => {
     },
     managers: [
       {
-        login: owner.login,
-        avatar_url: owner.avatar_url || owner.avatarUrl,
+        login: issue.author.login,
+        avatar_url: issue.author.avatar_url || issue.author.avatarUrl,
       },
     ],
     labels: issue.labels.map((label) => label.name),

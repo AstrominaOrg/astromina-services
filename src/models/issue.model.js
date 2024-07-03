@@ -36,6 +36,10 @@ const issueSchema = new mongoose.Schema(
           id: {
             type: String,
           },
+          rewarded: {
+            type: Boolean,
+            default: false,
+          },
         },
       ],
       default: [],
@@ -79,6 +83,10 @@ const issueSchema = new mongoose.Schema(
       required: true,
     },
     solved: {
+      type: Boolean,
+      default: false,
+    },
+    rewarded: {
       type: Boolean,
       default: false,
     },

@@ -2,7 +2,7 @@ const httpStatus = require('http-status');
 const pick = require('../utils/pick');
 const ApiError = require('../utils/ApiError');
 const catchAsync = require('../utils/catchAsync');
-const { userService, githubService, organizationService } = require('../services');
+const { userService, githubService, organizationService, issueService } = require('../services');
 const { set } = require('../config/redis');
 
 const getUsers = catchAsync(async (req, res) => {
@@ -36,7 +36,10 @@ const getUserGithubActivity = catchAsync(async (req, res) => {
 });
 
 const getUserActivity = catchAsync(async (req, res) => {
-  const result = await userService.getUserActivity(req.params.username);
+  const result = await issueService.queryIssues(
+    { assignees: { $elemMatch: { login: req.params.username } }, state: 'closed', solved: true },
+    { limit: 5, sortBy: 'solved_at:desc' }
+  );
   res.send(result);
 });
 

@@ -5,6 +5,7 @@ const { REST } = require('@discordjs/rest');
 const { Routes } = require('discord-api-types/v9');
 const config = require('./config/config');
 const logger = require('./config/logger');
+const { markUserAsRewarded } = require('./services/user.service');
 
 const dcbot = new Client({
   intents: [
@@ -116,6 +117,7 @@ dcbot.on('interactionCreate', async (interaction) => {
 
   if (interaction.customId.startsWith('received_reward_')) {
     const issueId = interaction.customId.split('received_reward_')[1];
+    markUserAsRewarded(interaction.user.id, issueId);
     await interaction.reply(`Button clicked by ${interaction.user.username} for issue ${issueId}`);
   }
 });

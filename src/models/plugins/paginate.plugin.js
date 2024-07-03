@@ -50,6 +50,10 @@ const paginate = (schema) => {
       });
     }
 
+    if (options.select) {
+      docsPromise = docsPromise.select(options.select);
+    }
+
     docsPromise = docsPromise.exec();
 
     return Promise.all([countPromise, docsPromise]).then((values) => {

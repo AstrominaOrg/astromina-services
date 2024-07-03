@@ -1,10 +1,6 @@
 const config = require('../config/config');
 const logger = require('../config/logger');
-const {
-  getIssueByIssueNumberAndRepositoryId,
-  markIssueAsSolved,
-  updatePrice,
-} = require('./issue.service');
+const { getIssueByIssueNumberAndRepositoryId, markIssueAsSolved, updatePrice } = require('./issue.service');
 const { createOrUpdateRepository } = require('./repository.service');
 const { createOrUpdateOrganization } = require('./organization.service');
 const { saveIssue } = require('../utils/issue.utils');
@@ -50,6 +46,10 @@ query ($org: String!, $repo: String!, $issuesFirst: Int!, $commentsFirst: Int!, 
         }
         comments(first: $commentsFirst, after: $commentsAfter) {
           nodes {
+            author {
+              login
+              avatarUrl
+            }
             body
             id
           }
@@ -362,26 +362,25 @@ const getRepositoryIssues = async (org, repo) => {
     throw error;
   }
 
-  allIssues.forEach((issue) => {
-    price = 0;
-    issue.comments.nodes.forEach((comment) => {
-      if (comment.body.includes('/price')) {
-        price = comment.body.split('/price')[1].trim();
-      }
-    });
-
-    if (issue.author === null) {
-      issue.author = { login: 'ghost', avatarUrl: '' };
-    }
-
+  await Promise.all(allIssues.map(async (issue) => {
+    issue.comments = issue.comments.nodes;
     issue.labels = issue.labels.nodes;
     issue.assignees = issue.assignees.nodes;
+    issue.author = issue.author || { login: 'ghost', avatarUrl: '' };
 
-    saveIssue(issue, repo).then(() => {
-      updatePrice(issue.id, price);
-    });
-  });
+    await saveIssue(issue, repo);
+
+    // Check if there's a comment with the price command
+    const priceComment = issue.comments.find((comment) => comment.body.includes('/price'));
+    if (priceComment) {
+      const price = priceComment.body.split('/price')[1].trim();
+      const priceManager = priceComment.author || { login: 'ghost', avatarUrl: '' };
+
+      await updatePrice(issue.id, price, priceManager);
+    }
+  }));
 };
+
 
 /**
  * Fetches members of a GitHub organization.
@@ -465,13 +464,8 @@ const recoverOrganization = async (name) => {
     await initializeOctokit();
   }
 
-  await mongoose.connection.db.dropCollection('issues');
-  await mongoose.connection.db.dropCollection('pullrequests');
-  await mongoose.connection.db.dropCollection('repositories');
-  await mongoose.connection.db.dropCollection('organizations');
-
   const organization = await getOrganization(name);
-  createOrUpdateOrganization({
+  await createOrUpdateOrganization({
     organizationId: organization.data.node_id,
     title: organization.data.login,
     url: organization.data.url,
@@ -483,7 +477,7 @@ const recoverOrganization = async (name) => {
 
   let repos = await getOrganizationRepos(name);
 
-  createOrUpdateOrganization({
+  await createOrUpdateOrganization({
     organizationId: organization.data.node_id,
     repositories: repos.map((repo) => ({
       id: repo.id,

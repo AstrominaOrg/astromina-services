@@ -24,6 +24,8 @@ const getIssues = {
     assigneeUsername: Joi.string(),
     state: Joi.string().valid('open', 'closed'),
     solved: Joi.boolean(),
+    rewarded: Joi.boolean(),
+    untouched: Joi.boolean(),
     priceMin: Joi.number().integer().min(0),
     priceMax: Joi.number().integer().min(0),
     labels: Joi.string(),

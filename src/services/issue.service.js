@@ -21,17 +21,8 @@ const createIssue = async (issueBody) => {
  * @returns {Promise<QueryResult>}
  */
 const queryIssues = async (filter, options) => {
-  const issues = await Issue.paginate(filter, options);
+  const issues = await Issue.paginate(filter, { ...options, select: '-thread' });
   return issues;
-};
-
-/**
- * Get issue by id
- * @param {ObjectId} id
- * @returns {Promise<Issue>}
- */
-const getIssueById = async (id) => {
-  return Issue.findById(id);
 };
 
 /**
@@ -39,7 +30,9 @@ const getIssueById = async (id) => {
  * @returns {Promise<Issue>}
  */
 async function getIssue(issueId) {
-  return Issue.findOne({ issueId });
+  const issue = await queryIssues({ issueId });
+
+  return issue.results[0];
 }
 
 /**
@@ -48,11 +41,15 @@ async function getIssue(issueId) {
  * @returns {Promise<Issue>}
  */
 async function getIssueByIssueNumberAndRepositoryId(issueNumber, repositoryId) {
-  return Issue.findOne({ number: issueNumber, 'repository.id': repositoryId });
+  const issue = await queryIssues({ number: issueNumber, 'repository.id': repositoryId });
+
+  return issue.results[0];
 }
 
 async function getIssueByOwnerAndRepoAndIssueNumber(owner, repo, issueNumber) {
-  return Issue.findOne({ 'owner.login': owner, 'repository.name': repo, number: issueNumber });
+  const issue = await queryIssues({ 'owner.login': owner, 'repository.name': repo, number: issueNumber });
+
+  return issue.results[0];
 }
 
 /**
@@ -61,7 +58,7 @@ async function getIssueByOwnerAndRepoAndIssueNumber(owner, repo, issueNumber) {
  * @param {Object} updateBody
  * @returns {Promise<Issue>}
  */
-const updateIssueByIssueId = async (issueId, updateBody) => {
+const updateIssue = async (issueId, updateBody) => {
   const issue = await getIssue(issueId);
   if (!issue) {
     throw new ApiError(httpStatus.NOT_FOUND, 'Issue not found');
@@ -76,7 +73,7 @@ const updateIssueByIssueId = async (issueId, updateBody) => {
  * @param {ObjectId} issueId
  * @returns {Promise<Issue>}
  */
-const deleteIssueByIssueId = async (issueId) => {
+const deleteIssue = async (issueId) => {
   const issue = await getIssue(issueId);
   if (!issue) {
     throw new ApiError(httpStatus.NOT_FOUND, 'Issue not found');
@@ -93,29 +90,40 @@ const deleteIssueByIssueId = async (issueId) => {
 async function createOrUpdateIssue(issueBody) {
   const issue = await getIssue(issueBody.issueId);
   if (issue) {
-    return updateIssueByIssueId(issueBody.issueId, issueBody);
+    return updateIssue(issueBody.issueId, issueBody);
   }
   return createIssue(issueBody);
 }
 
 async function markIssueAsSolved(issueId) {
-  return updateIssueByIssueId(issueId, { solved: true, solved_at: new Date() });
+  return updateIssue(issueId, { solved: true, solved_at: new Date() });
 }
 
-async function updatePrice(issueId, price) {
-  return updateIssueByIssueId(issueId, { price });
+async function updatePrice(issueId, price, priceManager) {
+  const issue = await getIssue(issueId);
+
+  if (!issue) {
+    throw new ApiError(httpStatus.NOT_FOUND, 'Issue not found');
+  }
+
+  issue.managers.push({
+    login: priceManager.login,
+    avatar_url: priceManager.avatar_url || priceManager.avatarUrl,
+  });
+  issue.price = price;
+
+  await issue.save();
 }
 
 module.exports = {
+  getIssue,
+  updatePrice,
   createIssue,
   queryIssues,
-  getIssueById,
+  updateIssue,
+  deleteIssue,
+  markIssueAsSolved,
+  createOrUpdateIssue,
   getIssueByIssueNumberAndRepositoryId,
   getIssueByOwnerAndRepoAndIssueNumber,
-  getIssue,
-  markIssueAsSolved,
-  updateIssueByIssueId,
-  deleteIssueByIssueId,
-  createOrUpdateIssue,
-  updatePrice,
 };
