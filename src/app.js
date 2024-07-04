@@ -6,6 +6,7 @@ const compression = require('compression');
 const cors = require('cors');
 const passport = require('passport');
 const httpStatus = require('http-status');
+const cookieParser = require('cookie-parser');
 const session = require('express-session');
 const config = require('./config/config');
 const morgan = require('./config/morgan');
@@ -24,6 +25,7 @@ if (config.env !== 'test') {
 
 // set security HTTP headers
 app.use(helmet());
+app.use(cookieParser());
 
 // set secure attribute for cookies
 app.use(
@@ -47,7 +49,13 @@ app.use(mongoSanitize());
 app.use(compression());
 
 // enable cors
-app.use(cors());
+app.use(
+  cors({
+    origin: config.frontendUrl,
+    credentials: true,
+  })
+);
+
 app.options('*', cors());
 
 // jwt authentication

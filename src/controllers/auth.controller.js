@@ -10,7 +10,14 @@ const { set, get } = require('../config/redis');
 const githubCallback = catchAsync(async (req, res) => {
   const { user } = req;
   const tokens = await tokenService.generateAuthTokens(user);
-  res.redirect(`${config.frontendUrl}?token=${tokens.access.token}`);
+
+  res.cookie('accessToken', tokens.access.token, {
+    httpOnly: true,
+    secure: true,
+    sameSite: 'none',
+  });
+
+  res.redirect(`${config.frontendUrl}`);
 });
 
 const discord = catchAsync(async (req, res, next) => {
@@ -23,7 +30,7 @@ const discordCallback = catchAsync(async (req, res) => {
   const { profile } = req.authInfo;
   const { id } = JSON.parse(req.query.state);
   await userService.updateUserDiscordByUserId(id, profile);
-  res.redirect(`/v1/docs`);
+  res.redirect(`${config.frontendUrl}`);
 });
 
 const logout = catchAsync(async (req, res) => {

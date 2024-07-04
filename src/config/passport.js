@@ -7,9 +7,15 @@ const { tokenTypes } = require('./tokens');
 const { User, Admin } = require('../models');
 const { createUser } = require('../services/user.service');
 
+const cookieExtractor = (req) => {
+  if (req && req.cookies) {
+    return req.cookies.accessToken;
+  }
+};
+
 const jwtOptions = {
   secretOrKey: config.jwt.secret,
-  jwtFromRequest: ExtractJwt.fromUrlQueryParameter('token'),
+  jwtFromRequest: ExtractJwt.fromExtractors([cookieExtractor, ExtractJwt.fromAuthHeaderAsBearerToken()]),
 };
 
 const jwtVerify = async (payload, done) => {
