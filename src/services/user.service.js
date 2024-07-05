@@ -100,7 +100,7 @@ const createUser = async (profile) => {
     github: {
       id: profile.nodeId,
       username: profile.username,
-      emails: profile.emails.map((email) => email.value),
+      emails: profile.emails ? profile.emails.map((email) => email.value) : [],
       photos: profile.photos.map((photo) => photo.value),
       company: profile._json.company,
       avatar_url: profile._json.avatar_url,
