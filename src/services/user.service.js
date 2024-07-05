@@ -95,7 +95,7 @@ const createUser = async (profile) => {
 
   return User.create({
     name: profile.displayName || profile.username,
-    email: profile._json.email,
+    email: profile._json.email ? profile._json.email : '',
     bio: profile._json.bio,
     github: {
       id: profile.nodeId,
