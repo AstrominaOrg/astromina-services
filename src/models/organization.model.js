@@ -12,6 +12,10 @@ const organizationSchema = new mongoose.Schema(
       type: String,
       required: true,
     },
+    name: {
+      type: String,
+      required: true,
+    },
     url: {
       type: String,
       required: true,

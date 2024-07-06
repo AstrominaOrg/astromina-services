@@ -362,25 +362,26 @@ const getRepositoryIssues = async (org, repo) => {
     throw error;
   }
 
-  await Promise.all(allIssues.map(async (issue) => {
-    issue.comments = issue.comments.nodes;
-    issue.labels = issue.labels.nodes;
-    issue.assignees = issue.assignees.nodes;
-    issue.author = issue.author || { login: 'ghost', avatarUrl: '' };
+  await Promise.all(
+    allIssues.map(async (issue) => {
+      issue.comments = issue.comments.nodes;
+      issue.labels = issue.labels.nodes;
+      issue.assignees = issue.assignees.nodes;
+      issue.author = issue.author || { login: 'ghost', avatarUrl: '' };
 
-    await saveIssue(issue, repo);
+      await saveIssue(issue, repo);
 
-    // Check if there's a comment with the price command
-    const priceComment = issue.comments.find((comment) => comment.body.includes('/price'));
-    if (priceComment) {
-      const price = priceComment.body.split('/price')[1].trim();
-      const priceManager = priceComment.author || { login: 'ghost', avatarUrl: '' };
+      // Check if there's a comment with the price command
+      const priceComment = issue.comments.find((comment) => comment.body.includes('/price'));
+      if (priceComment) {
+        const price = priceComment.body.split('/price')[1].trim();
+        const priceManager = priceComment.author || { login: 'ghost', avatarUrl: '' };
 
-      await updatePrice(issue.id, price, priceManager);
-    }
-  }));
+        await updatePrice(issue.id, price, priceManager);
+      }
+    })
+  );
 };
-
 
 /**
  * Fetches members of a GitHub organization.
@@ -465,9 +466,17 @@ const recoverOrganization = async (name) => {
   }
 
   const organization = await getOrganization(name);
+
   await createOrUpdateOrganization({
     organizationId: organization.data.node_id,
     title: organization.data.login,
+    name: organization.data.name,
+    website: {
+      url: organization.data.blog,
+    },
+    twitter: {
+      url: `https://x.com/${organization.data.twitter_username}`,
+    },
     url: organization.data.url,
     description: organization.data.description,
     avatar_url: organization.data.avatarUrl,
