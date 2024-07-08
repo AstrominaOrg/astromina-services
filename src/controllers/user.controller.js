@@ -55,6 +55,12 @@ const getMyManagedIssues = catchAsync(async (req, res) => {
   res.send(result);
 });
 
+const getMyAssignedIssues = catchAsync(async (req, res) => {
+  const options = pick(req.query, ['sortBy', 'limit', 'page']);
+  const result = await userService.getAssignedIssues(req.authUser.github.username, options);
+  res.send(result);
+});
+
 const updateProfile = catchAsync(async (req, res) => {
   const user = await userService.updateProfile(req.authUser.github.username, req.body);
   res.send(user);
@@ -63,6 +69,7 @@ const updateProfile = catchAsync(async (req, res) => {
 module.exports = {
   getContributedProjects,
   getUserGithubActivity,
+  getMyAssignedIssues,
   getMyManagedIssues,
   getUserActivity,
   updateProfile,

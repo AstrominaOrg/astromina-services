@@ -1,6 +1,12 @@
 const config = require('../config/config');
 const logger = require('../config/logger');
-const { getIssueByIssueNumberAndRepositoryId, markIssueAsSolved, updatePrice } = require('./issue.service');
+const {
+  getIssueByIssueNumberAndRepositoryId,
+  markIssueAsSolved,
+  updatePrice,
+  queryIssues,
+  updateIssue,
+} = require('./issue.service');
 const { createOrUpdateRepository } = require('./repository.service');
 const { createOrUpdateOrganization } = require('./organization.service');
 const { saveIssue } = require('../utils/issue.utils');
@@ -578,8 +584,60 @@ const getUserContributions = async (userName) => {
   }
 };
 
+const overrideAssignee = async (username) => {
+  if (!octokitInstance) {
+    await initializeOctokit();
+  }
+
+  const githubUser = await octokitInstance.rest.users.getByUsername({
+    username,
+  });
+
+  const issues = (await queryIssues({}, {})).results;
+
+  for (let i = 0; i < issues.length; i++) {
+    const issue = issues[i];
+    await updateIssue(issue.issueId, {
+      assignees: [
+        {
+          login: githubUser.data.login,
+          avatar_url: githubUser.data.avatar_url,
+          id: githubUser.data.id,
+          rewarded: Math.random() >= 0.5,
+        },
+      ],
+    });
+  }
+};
+
+const overrideManager = async (username) => {
+  if (!octokitInstance) {
+    await initializeOctokit();
+  }
+
+  const githubUser = await octokitInstance.rest.users.getByUsername({
+    username,
+  });
+
+  const issues = (await queryIssues({}, {})).results;
+
+  for (let i = 0; i < issues.length; i++) {
+    const issue = issues[i];
+    await updateIssue(issue.issueId, {
+      managers: [
+        {
+          login: githubUser.data.login,
+          avatar_url: githubUser.data.avatar_url,
+        },
+      ],
+    });
+  }
+};
+
 module.exports = {
   getLinkedIssues,
+  overrideManager,
+  overrideAssignee,
   recoverOrganization,
   getOrganizationMembers,
   getUserContributions,

@@ -271,6 +271,17 @@ const getManagedIssues = async (username, options) => {
   return managedIssues;
 };
 
+const getAssignedIssues = async (username, options) => {
+  const user = await getUser(username);
+  if (!user) {
+    throw new ApiError(httpStatus.NOT_FOUND, 'User not found');
+  }
+
+  const managedIssues = Issue.paginate({ 'assignees.login': username }, options);
+
+  return managedIssues;
+};
+
 const markUserAsRewarded = async (id, issueId) => {
   const user = await getUserByDiscordId(id);
   if (!user) {
@@ -315,6 +326,7 @@ module.exports = {
   deleteUserById,
   getUserByEmail,
   getManagedIssues,
+  getAssignedIssues,
   markUserAsRewarded,
   getUserByDiscordId,
   getContributedProjects,

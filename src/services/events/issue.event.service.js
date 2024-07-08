@@ -9,17 +9,23 @@ const { isMember } = require('../organization.service');
 async function handleIssueCreate(context) {
   const { issue, repository } = context.payload;
 
+  issue.author = issue.user;
+
   await saveIssue(issue, repository);
 }
 
 async function handleIssueChange(context) {
   const { issue, repository } = context.payload;
 
+  issue.author = issue.user;
+
   await saveIssue(issue, repository);
 }
 
 async function handleAssigned(context) {
   const { issue, assignee, repository } = context.payload;
+
+  issue.author = issue.user;
 
   await saveIssue(issue, repository);
   tryAddThreadMember({ client: dcbot, issue, githubUsername: assignee.login });
@@ -36,6 +42,8 @@ async function handleUnassigned(context) {
     if (userDB && userDB.thread && userDB.thread.id) {
       await removeThreadMember({ client: dcbot, threadId: userDB.thread.id, userId: discordId });
     }
+
+    issue.author = issue.user;
 
     await saveIssue(issue, repository);
   }
