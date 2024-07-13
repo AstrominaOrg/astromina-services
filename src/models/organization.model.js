@@ -62,6 +62,9 @@ const organizationSchema = new mongoose.Schema(
             type: String,
             required: true,
           },
+          avatar_url: {
+            type: String,
+          },
           role: {
             type: String,
           },

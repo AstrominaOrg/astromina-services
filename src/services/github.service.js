@@ -417,10 +417,11 @@ const getOrganizationMembers = async (org) => {
 
           role = roleData.data.role;
         } catch (error) {}
-
+        
         return {
           login: member.login,
           id: member.id,
+          avatar_url: member.avatar_url,
           role,
         };
       })
