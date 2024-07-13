@@ -485,7 +485,7 @@ const recoverOrganization = async (name) => {
     },
     url: organization.data.url,
     description: organization.data.description,
-    avatar_url: organization.data.avatarUrl,
+    avatar_url: organization.data.avatar_url,
     state: 'accepted',
     members: await getOrganizationMembers(name),
   });
