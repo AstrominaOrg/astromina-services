@@ -594,7 +594,7 @@ const overrideAssignee = async (username) => {
     username,
   });
 
-  const issues = (await queryIssues({}, {})).results;
+  const issues = (await queryIssues({}, {limit: 100})).results;
 
   for (let i = 0; i < issues.length; i++) {
     const issue = issues[i];
@@ -620,7 +620,7 @@ const overrideManager = async (username) => {
     username,
   });
 
-  const issues = (await queryIssues({}, {})).results;
+  const issues = (await queryIssues({}, {limit: 100})).results;
 
   for (let i = 0; i < issues.length; i++) {
     const issue = issues[i];
