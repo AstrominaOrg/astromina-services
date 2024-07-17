@@ -2,7 +2,7 @@ const Joi = require('joi');
 
 const getOrganizations = {
   query: Joi.object().keys({
-    title: Joi.string(),
+    name: Joi.string(),
     url: Joi.string(),
     state: Joi.string().valid('pending', 'accepted', 'rejected'),
     sortBy: Joi.string(),

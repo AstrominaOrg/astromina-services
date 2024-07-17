@@ -5,7 +5,12 @@ const catchAsync = require('../utils/catchAsync');
 const { organizationService } = require('../services');
 
 const getOrganizations = catchAsync(async (req, res) => {
-  const filter = pick(req.query, ['title', 'state']);
+  const filter = pick(req.query, ['name', 'state']);
+
+  if (req.query.name) {
+    filter.name = { $regex: req.query.name, $options: 'i' };
+  }
+
   const options = pick(req.query, ['sortBy', 'limit', 'page']);
   const result = await organizationService.queryOrganizations(filter, options);
   res.send(result);
