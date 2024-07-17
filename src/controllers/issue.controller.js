@@ -12,6 +12,7 @@ const getIssues = catchAsync(async (req, res) => {
     'description',
     'repositoryId',
     'state',
+    'owner',
     'solved',
     'rewarded',
     'labels',
@@ -33,7 +34,7 @@ const getIssues = catchAsync(async (req, res) => {
   }
 
   if (req.query.ownerLogin) {
-    filter.owner = { login: req.query.ownerLogin };
+    filter['owner.login'] = req.query.ownerLogin;
   }
 
   if (req.query.managerLogin) {

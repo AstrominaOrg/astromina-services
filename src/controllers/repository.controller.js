@@ -7,6 +7,11 @@ const { repositoryService } = require('../services');
 const getRepositories = catchAsync(async (req, res) => {
   const filter = pick(req.query, ['name', 'full_name', 'owner', 'type', 'private', 'state']);
   const options = pick(req.query, ['sortBy', 'limit', 'page']);
+
+  if (req.query.ownerLogin) {
+    filter['owner.login'] = req.query.ownerLogin;
+  }
+
   const result = await repositoryService.queryRepositories(filter, options);
   res.send(result);
 });
