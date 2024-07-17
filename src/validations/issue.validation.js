@@ -28,7 +28,7 @@ const getIssues = {
     untouched: Joi.boolean(),
     priceMin: Joi.number().integer().min(0),
     priceMax: Joi.number().integer().min(0),
-    labels: Joi.string(),
+    labels: Joi.alternatives().try(Joi.string(), Joi.array().items(Joi.string())),
     sortBy: Joi.string(),
     limit: Joi.number().integer(),
     page: Joi.number().integer(),

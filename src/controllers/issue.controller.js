@@ -48,6 +48,11 @@ const getIssues = catchAsync(async (req, res) => {
     filter.repository = { id: req.query.repositoryId };
   }
 
+  if (req.query.labels) {
+    const labels = Array.isArray(req.query.labels) ? req.query.labels : [req.query.labels];
+    filter.labels = { $in: labels };
+  }
+
   const options = pick(req.query, ['sortBy', 'limit', 'page']);
   options.select = '-thread';
   const result = await issueService.queryIssues(filter, options);
