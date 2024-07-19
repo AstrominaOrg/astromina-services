@@ -143,7 +143,7 @@ const tryAddThreadMember = async ({ client, githubUsername, issue }) => {
 
   if (user && user.discord && user.discord.id !== null) {
     const discordId = user.discord.id;
-    const userDB = await getIssue(issue.node_id);
+    const userDB = await getIssue(issue.node_id || issue.id);
 
     if (userDB && userDB.thread && userDB.thread.id) {
       await addThreadMember({ client, threadId: userDB.thread.id, userId: discordId });

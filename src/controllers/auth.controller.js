@@ -30,6 +30,7 @@ const discordCallback = catchAsync(async (req, res) => {
   const { profile } = req.authInfo;
   const { id } = JSON.parse(req.query.state);
   await userService.updateUserDiscordByUserId(id, profile);
+  await userService.recoverUsersThreads(id);
   res.redirect(`${config.frontendUrl}`);
 });
 

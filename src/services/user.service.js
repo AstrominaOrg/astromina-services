@@ -1,6 +1,8 @@
 const httpStatus = require('http-status');
 const { User, Issue } = require('../models');
 const ApiError = require('../utils/ApiError');
+const { addThreadMember } = require('./discord.service');
+const dcbot = require('../dcbot');
 
 /**
  * Query for users
@@ -315,6 +317,19 @@ const markUserAsRewarded = async (id, issueId) => {
   await issue.save();
 };
 
+const recoverUsersThreads = async (id) => {
+  const user = await getUserById(id);
+  if (!user) {
+    throw new ApiError(httpStatus.NOT_FOUND, 'User not found');
+  }
+  const issues = await Issue.find({ 'assignees.login': user.github.username });
+  issues
+    .filter((issue) => issue.thread.id)
+    .forEach((issue) => {
+      addThreadMember({ client: dcbot, threadId: issue.thread.id, userId: user.discord.id });
+    });
+};
+
 module.exports = {
   getUser,
   addIssue,
@@ -329,6 +344,7 @@ module.exports = {
   getAssignedIssues,
   markUserAsRewarded,
   getUserByDiscordId,
+  recoverUsersThreads,
   getContributedProjects,
   updateUserDiscordByUserId,
 };
