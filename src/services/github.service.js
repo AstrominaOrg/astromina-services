@@ -417,7 +417,7 @@ const getOrganizationMembers = async (org) => {
 
           role = roleData.data.role;
         } catch (error) {}
-        
+
         return {
           login: member.login,
           id: member.id,
@@ -594,7 +594,7 @@ const overrideAssignee = async (username) => {
     username,
   });
 
-  const issues = (await queryIssues({}, {limit: 100})).results;
+  const issues = (await queryIssues({}, { limit: 100 })).results;
 
   for (let i = 0; i < issues.length; i++) {
     const issue = issues[i];
@@ -620,7 +620,7 @@ const overrideManager = async (username) => {
     username,
   });
 
-  const issues = (await queryIssues({}, {limit: 100})).results;
+  const issues = (await queryIssues({}, { limit: 100 })).results;
 
   for (let i = 0; i < issues.length; i++) {
     const issue = issues[i];
@@ -635,10 +635,30 @@ const overrideManager = async (username) => {
   }
 };
 
+const overrideThread = async (threadId, threadName, threadMember) => {
+  if (!octokitInstance) {
+    await initializeOctokit();
+  }
+
+  const issues = (await queryIssues({}, { limit: 100 })).results;
+
+  for (let i = 0; i < issues.length; i++) {
+    const issue = issues[i];
+    await updateIssue(issue.issueId, {
+      thread: {
+        id: threadId,
+        name: threadName,
+        members: [threadMember],
+      },
+    });
+  }
+};
+
 module.exports = {
   getLinkedIssues,
   overrideManager,
   overrideAssignee,
+  overrideThread,
   recoverOrganization,
   getOrganizationMembers,
   getUserContributions,
