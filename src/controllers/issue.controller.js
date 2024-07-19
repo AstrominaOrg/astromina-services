@@ -58,6 +58,12 @@ const getIssues = catchAsync(async (req, res) => {
     filter.title = { $regex: req.query.title, $options: 'i' };
   }
 
+  if (req.query.hasBounty) {
+    filter.price = { $gt: 0 };
+  } else {
+    filter.price = 0;
+  }
+
   const options = pick(req.query, ['sortBy', 'limit', 'page']);
   options.select = '-thread';
   const result = await issueService.queryIssues(filter, options);

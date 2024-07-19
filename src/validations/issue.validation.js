@@ -26,6 +26,7 @@ const getIssues = {
     solved: Joi.boolean(),
     rewarded: Joi.boolean(),
     untouched: Joi.boolean(),
+    hasBounty: Joi.boolean(),
     priceMin: Joi.number().integer().min(0),
     priceMax: Joi.number().integer().min(0),
     labels: Joi.alternatives().try(Joi.string(), Joi.array().items(Joi.string())),
