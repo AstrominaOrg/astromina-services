@@ -597,6 +597,7 @@ const overrideAssignee = async (username) => {
   const issues = (await queryIssues({}, { limit: 100 })).results;
 
   for (let i = 0; i < issues.length; i++) {
+    const isRewarded = Math.random() >= 0.5;
     const issue = issues[i];
     await updateIssue(issue.issueId, {
       assignees: [
@@ -604,9 +605,11 @@ const overrideAssignee = async (username) => {
           login: githubUser.data.login,
           avatar_url: githubUser.data.avatar_url,
           id: githubUser.data.id,
-          rewarded: Math.random() >= 0.5,
+          rewarded: isRewarded,
         },
       ],
+      solved: isRewarded,
+      rewarded: isRewarded,
     });
   }
 };
