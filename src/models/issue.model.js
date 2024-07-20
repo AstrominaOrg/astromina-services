@@ -40,6 +40,9 @@ const issueSchema = new mongoose.Schema(
             type: Boolean,
             default: false,
           },
+          assigned_at: {
+            type: Date,
+          },
         },
       ],
       default: [],

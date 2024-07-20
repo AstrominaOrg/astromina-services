@@ -14,6 +14,7 @@ const saveIssue = async (issue, repository) => {
       id: assignee.id,
       avatar_url: assignee.avatar_url || assignee.avatarUrl,
       rewarded: false,
+      assigned_at: assignee.assigned_at || new Date(),
     })),
     repository: {
       id: repository.node_id || repository.id,
@@ -31,6 +32,7 @@ const saveIssue = async (issue, repository) => {
     ],
     labels: issue.labels.map((label) => label.name),
     state: issue.state.toLowerCase(),
+    createdAt: issue.created_at || issue.createdAt,
   };
 
   await createOrUpdateIssue(issueData);

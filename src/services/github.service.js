@@ -42,12 +42,30 @@ query ($org: String!, $repo: String!, $issuesFirst: Int!, $commentsFirst: Int!, 
         id
         number
         url
+        createdAt
         title
         body
         state
         labels(first: 10) {
           nodes {
             name
+          }
+        }
+        timelineItems(itemTypes: [ASSIGNED_EVENT], first: 10) {
+          nodes {
+            ... on AssignedEvent {
+              createdAt
+              assignee {
+                ... on User {
+                  login,
+                  url
+                }
+                ... on Bot {
+                  login,
+                  url            
+                }
+              }
+            }
           }
         }
         comments(first: $commentsFirst, after: $commentsAfter) {
@@ -64,6 +82,7 @@ query ($org: String!, $repo: String!, $issuesFirst: Int!, $commentsFirst: Int!, 
           nodes {
             login
             avatarUrl
+            createdAt
             id
           }
         }
@@ -372,7 +391,20 @@ const getRepositoryIssues = async (org, repo) => {
     allIssues.map(async (issue) => {
       issue.comments = issue.comments.nodes;
       issue.labels = issue.labels.nodes;
-      issue.assignees = issue.assignees.nodes;
+
+      issue.assignees = issue.assignees.nodes.map((assignee) => {
+        const assigned_at = issue.timelineItems.nodes.find(
+          (item) => item.assignee && item.assignee.login === assignee.login
+        )?.createdAt;
+
+        return {
+          login: assignee.login,
+          id: assignee.id,
+          avatar_url: assignee.avatarUrl,
+          assigned_at,
+        };
+      });
+
       issue.author = issue.author || { login: 'ghost', avatarUrl: '' };
 
       await saveIssue(issue, repo);
