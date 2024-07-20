@@ -262,24 +262,24 @@ const getContributedProjects = async (username) => {
   };
 };
 
-const getManagedIssues = async (username, options) => {
+const getManagedIssues = async (username, filter, options) => {
   const user = await getUser(username);
   if (!user) {
     throw new ApiError(httpStatus.NOT_FOUND, 'User not found');
   }
 
-  const managedIssues = Issue.paginate({ 'managers.login': username }, options);
+  const managedIssues = Issue.paginate({ 'assignees.login': username, ...filter }, options);
 
   return managedIssues;
 };
 
-const getAssignedIssues = async (username, options) => {
+const getAssignedIssues = async (username, filter, options) => {
   const user = await getUser(username);
   if (!user) {
     throw new ApiError(httpStatus.NOT_FOUND, 'User not found');
   }
 
-  const managedIssues = Issue.paginate({ 'assignees.login': username }, options);
+  const managedIssues = Issue.paginate({ 'assignees.login': username, ...filter }, options);
 
   return managedIssues;
 };

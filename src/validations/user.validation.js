@@ -9,6 +9,32 @@ const getUsers = {
   }),
 };
 
+const getMyManagedIssues = {
+  query: Joi.object().keys({
+    name: Joi.string(),
+    rewarded: Joi.boolean(),
+    solved: Joi.boolean(),
+    ownerLogin: Joi.string(),
+    untouched: Joi.boolean(),
+    page: Joi.number().integer(),
+    limit: Joi.number().integer(),
+    sortBy: Joi.string(),
+  }),
+};
+
+const getMyAssignedIssues = {
+  query: Joi.object().keys({
+    name: Joi.string(),
+    rewarded: Joi.boolean(),
+    solved: Joi.boolean(),
+    ownerLogin: Joi.string(),
+    untouched: Joi.boolean(),
+    page: Joi.number().integer(),
+    limit: Joi.number().integer(),
+    sortBy: Joi.string(),
+  }),
+};
+
 const getUser = {
   params: Joi.object().keys({
     username: Joi.string().required(),
@@ -44,6 +70,8 @@ const updateProfile = {
 
 module.exports = {
   getContributedProjects,
+  getMyAssignedIssues,
+  getMyManagedIssues,
   updateProfile,
   getUsers,
   getUser,

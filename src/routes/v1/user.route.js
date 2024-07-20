@@ -12,8 +12,12 @@ router.route('/').get(validate(userValidation.getUsers), userController.getUsers
 // Auth routes
 router.route('/me').get(auth('getProfile'), userController.getMe);
 router.route('/my-projects').get(auth('getProfile'), userController.getMyProjects);
-router.route('/my-managed-issues').get(auth('getProfile'), userController.getMyManagedIssues);
-router.route('/my-assigned-issues').get(auth('getProfile'), userController.getMyAssignedIssues);
+router
+  .route('/my-managed-issues')
+  .get(validate(userValidation.getMyManagedIssues), auth('getProfile'), userController.getMyManagedIssues);
+router
+  .route('/my-assigned-issues')
+  .get(validate(userValidation.getMyAssignedIssues), auth('getProfile'), userController.getMyAssignedIssues);
 router
   .route('/update-profile')
   .patch(auth('updateProfile'), validate(userValidation.updateProfile), userController.updateProfile);

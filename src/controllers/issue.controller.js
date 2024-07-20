@@ -43,6 +43,8 @@ const getIssues = catchAsync(async (req, res) => {
 
   if (req.query.untouched) {
     filter.assignees = { $size: 0 };
+  } else {
+    filter.assignees = { $gt: [] };
   }
 
   if (req.query.repositoryId) {

@@ -50,14 +50,38 @@ const getMyProjects = catchAsync(async (req, res) => {
 });
 
 const getMyManagedIssues = catchAsync(async (req, res) => {
+  const filter = pick(req.query, ['name', 'rewarded', 'solved']);
+
+  if (req.query.ownerLogin) {
+    filter['owner.login'] = req.query.ownerLogin;
+  }
+
+  if (req.query.untouched) {
+    filter.assignees = { $size: 0 };
+  } else {
+    filter.assignees = { $gt: [] };
+  }
+
   const options = pick(req.query, ['sortBy', 'limit', 'page']);
-  const result = await userService.getManagedIssues(req.authUser.github.username, options);
+  const result = await userService.getManagedIssues(req.authUser.github.username, filter, options);
   res.send(result);
 });
 
 const getMyAssignedIssues = catchAsync(async (req, res) => {
+  const filter = pick(req.query, ['name', 'rewarded', 'solved']);
+
+  if (req.query.ownerLogin) {
+    filter['owner.login'] = req.query.ownerLogin;
+  }
+
+  if (req.query.untouched) {
+    filter.assignees = { $size: 0 };
+  } else {
+    filter.assignees = { $gt: [] };
+  }
+
   const options = pick(req.query, ['sortBy', 'limit', 'page']);
-  const result = await userService.getAssignedIssues(req.authUser.github.username, options);
+  const result = await userService.getAssignedIssues(req.authUser.github.username, filter, options);
   res.send(result);
 });
 
