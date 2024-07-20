@@ -8,15 +8,36 @@ const passport = require('passport');
 const httpStatus = require('http-status');
 const cookieParser = require('cookie-parser');
 const session = require('express-session');
+const SmeeClient = require('smee-client');
+const { createNodeMiddleware, Probot } = require('probot');
 const config = require('./config/config');
+const routes = require('./routes/v1');
 const morgan = require('./config/morgan');
 const { jwtStrategy, githubStrategy, discordStrategy } = require('./config/passport');
 const { authLimiter } = require('./middlewares/rateLimiter');
-const routes = require('./routes/v1');
 const { errorConverter, errorHandler } = require('./middlewares/error');
 const ApiError = require('./utils/ApiError');
+const gitbot = require('./gitbot');
+
+if (config.env === 'development') {
+  const smee = new SmeeClient({
+    source: config.github.webhookProxyUrl,
+    target: `http://localhost:${config.port}${config.github.webhookPath}`,
+  });
+
+  smee.start();
+}
+
+const probot = new Probot({
+  appId: config.github.appId,
+  privateKey: config.github.privateKey,
+  secret: config.github.webhookSecret,
+});
+
+const probotMiddleware = createNodeMiddleware(gitbot, { probot });
 
 const app = express();
+
 
 if (config.env !== 'test') {
   app.use(morgan.successHandler);
@@ -32,8 +53,11 @@ app.use(
   session({
     secret: config.session.secret,
     resave: false,
+    saveUninitialized: true,
   })
 );
+
+app.use(probotMiddleware);
 
 // parse json request body
 app.use(express.json());

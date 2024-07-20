@@ -1,8 +1,12 @@
 const { ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
+const httpStatus = require('http-status');
 const logger = require('../config/logger');
 const { getIssue } = require('./issue.service');
-const { getUser } = require('./user.service');
 const config = require('../config/config');
+const dcbot = require('../dcbot');
+const { getUserById } = require('./user.service');
+const { Issue } = require('../models');
+const ApiError = require('../utils/ApiError');
 
 /**
  * Creates a private thread with specified users and sends an initial message.
@@ -52,13 +56,13 @@ async function createPrivateThread({ client, channelId, threadName, initialMessa
  * @param {string} params.threadId - The ID of the thread where the user will be added.
  * @param {string} params.userId - The ID of the user to be added to the thread.
  */
-async function addThreadMember({ client, threadId, userId }) {
-  const thread = await client.channels.fetch(threadId);
+async function addThreadMember({ threadId, userId }) {
+  const thread = await dcbot.channels.fetch(threadId);
   if (!thread || !thread.isThread()) {
     throw new Error('Invalid thread ID or the channel is not a thread.');
   }
 
-  const user = await client.users.fetch(userId);
+  const user = await dcbot.users.fetch(userId);
   if (!user) {
     throw new Error('Invalid user ID.');
   }
@@ -75,13 +79,13 @@ async function addThreadMember({ client, threadId, userId }) {
  * @param {string} params.reason - The reason for removing the user from the thread.
  */
 
-async function removeThreadMember({ client, threadId, userId, reason }) {
-  const thread = await client.channels.fetch(threadId);
+async function removeThreadMember({ threadId, userId, reason }) {
+  const thread = await dcbot.channels.fetch(threadId);
   if (!thread || !thread.isThread()) {
     throw new Error('Invalid thread ID or the channel is not a thread.');
   }
 
-  const user = await client.users.fetch(userId);
+  const user = await dcbot.users.fetch(userId);
   if (!user) {
     throw new Error('Invalid user ID.');
   }
@@ -97,8 +101,8 @@ async function removeThreadMember({ client, threadId, userId, reason }) {
  * @param {string} params.approvalMessage - The message to be sent in the thread with approval buttons.
  * @param {Object} params.user - The user who should see the confirmation buttons.
  */
-const createPaymentConfirmation = async ({ client, threadId, approvalMessage, user }) => {
-  const thread = await client.channels.fetch(threadId);
+const createPaymentConfirmation = async ({ threadId, approvalMessage, user }) => {
+  const thread = await dcbot.channels.fetch(threadId);
   if (!thread || !thread.isThread()) {
     throw new Error('Invalid thread ID or the channel is not a thread.');
   }
@@ -126,8 +130,8 @@ const createPaymentConfirmation = async ({ client, threadId, approvalMessage, us
  * @param {string} params.threadId - The ID of the thread where the message will be sent.
  * @param {string} params.message - The message to be sent in the thread.
  */
-const sendThreadMessage = async ({ client, threadId, message, components }) => {
-  const thread = await client.channels.fetch(threadId);
+const sendThreadMessage = async ({ threadId, message, components }) => {
+  const thread = await dcbot.channels.fetch(threadId);
   if (!thread || !thread.isThread()) {
     throw new Error('Invalid thread ID or the channel is not a thread.');
   }
@@ -138,49 +142,45 @@ const sendThreadMessage = async ({ client, threadId, message, components }) => {
   });
 };
 
-const tryAddThreadMember = async ({ client, githubUsername, issue }) => {
-  const user = await getUser(githubUsername);
-
+const tryAddThreadMember = async ({ user, issue }) => {
   if (user && user.discord && user.discord.id !== null) {
     const discordId = user.discord.id;
     const userDB = await getIssue(issue.node_id || issue.id);
 
     if (userDB && userDB.thread && userDB.thread.id) {
-      await addThreadMember({ client, threadId: userDB.thread.id, userId: discordId });
+      await addThreadMember({ threadId: userDB.thread.id, userId: discordId });
     }
   }
 };
 
-const getAssigneeDiscordIds = async (assignees) => {
-  const userDiscordIds = await Promise.all(
-    assignees
-      .map(async (assignee) => {
-        const user = await getUser(assignee.login);
-        return user.discord.id;
-      })
-      .filter((discordId) => discordId !== null)
-  );
-  return userDiscordIds;
+const recoverUsersThreads = async (id) => {
+  const user = await getUserById(id);
+  if (!user) {
+    throw new ApiError(httpStatus.NOT_FOUND, 'User not found');
+  }
+  const issues = await Issue.find({ 'assignees.login': user.github.username });
+  issues
+    .filter((issue) => issue.thread.id)
+    .forEach((issue) => {
+      addThreadMember({ threadId: issue.thread.id, userId: user.discord.id });
+    });
 };
 
-const getOrCreateThread = async ({ client, user, issue, price }) => {
+const getOrCreateThread = async ({ user, issue, price, assignees }) => {
   let thread;
 
   if (user && user.thread && user.thread.id) {
     thread = user.thread;
     await sendThreadMessage({
-      client,
       threadId: thread.id,
       message: `Price has been updated to $${price}`,
     });
   } else {
-    const userDiscordIds = await getAssigneeDiscordIds(issue.assignees);
     thread = await createPrivateThread({
-      client,
       channelId: config.discord.channelId,
       threadName: `Issue #${issue.number}`,
       initialMessage: `The issue #${issue.number} now marked as bounty with $${price} bounty. Assignees will be added to this thread when they are assigned to the issue.`,
-      ids: userDiscordIds,
+      ids: assignees,
       reason: 'Issue marked as bounty',
     });
   }
@@ -196,4 +196,5 @@ module.exports = {
   createPaymentConfirmation,
   tryAddThreadMember,
   getOrCreateThread,
+  recoverUsersThreads,
 };

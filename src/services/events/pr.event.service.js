@@ -2,7 +2,6 @@ const { getLinkedIssues } = require('../github.service');
 const { wrapHandlerWithCheck } = require('./helper');
 const { createOrUpdateIssue, getIssueByIssueNumberAndRepositoryId } = require('../issue.service');
 const { sendThreadMessage } = require('../discord.service');
-const dcbot = require('../../dcbot');
 const { savePullRequest } = require('../../utils/pr.utils');
 
 async function handlePullRequestCreate(context) {
@@ -34,7 +33,6 @@ async function handlePullRequestClose(context) {
         });
 
         await sendThreadMessage({
-          client: dcbot,
           threadId: issueDB.thread.id,
           message: `Issue ${issue.number} has been solved by pull request [${pullRequest.title}](${pullRequest.html_url})! ${
             issueDB.price
@@ -51,7 +49,6 @@ async function handlePullRequestClose(context) {
         };
 
         await sendThreadMessage({
-          client: dcbot,
           threadId: issueDB.thread.id,
           message: 'Please confirm you received the reward by clicking the button below.',
           components: [

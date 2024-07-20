@@ -3,7 +3,7 @@ const passport = require('passport');
 const config = require('../config/config');
 const catchAsync = require('../utils/catchAsync');
 const { ApiError } = require('../utils/ApiError');
-const { authService, tokenService, userService, emailService, adminService } = require('../services');
+const { authService, tokenService, userService, emailService, adminService, discordService } = require('../services');
 const oneTimePassword = require('../config/otp');
 const { set, get } = require('../config/redis');
 
@@ -30,7 +30,7 @@ const discordCallback = catchAsync(async (req, res) => {
   const { profile } = req.authInfo;
   const { id } = JSON.parse(req.query.state);
   await userService.updateUserDiscordByUserId(id, profile);
-  await userService.recoverUsersThreads(id);
+  await discordService.recoverUsersThreads(id);
   res.redirect(`${config.frontendUrl}`);
 });
 
