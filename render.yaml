@@ -2,7 +2,7 @@ services:
   - name: node-app
     type: web
     runtime: node
-    repo: https://github.com/AstrominaOrg/astromina-services-temp
+    repo: https://github.com/AstrominaOrg/astromina-services
     region: frankfurt
     branch: main
     buildCommand: yarn install

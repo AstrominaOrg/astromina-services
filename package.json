@@ -11,8 +11,7 @@
     "node": ">=12.0.0"
   },
   "scripts": {
-    "start": "pm2 start ecosystem.config.json --no-daemon --only app",
-    "github": "pm2 start ecosystem.config.json --no-daemon --only github",
+    "start": "pm2 start ecosystem.config.json --no-daemon",
     "dev": "cross-env NODE_ENV=development nodemon src/index.js",
     "recover": "cross-env NODE_ENV=development nodemon src/recover.js",
     "manipulate": "cross-env NODE_ENV=development nodemon src/manipulate.js",
