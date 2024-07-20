@@ -32,7 +32,7 @@ const errorHandler = (err, req, res, next) => {
   };
 
   if (config.env === 'development') {
-    logger.error(err);
+    logger.error(`${statusCode} - ${err.message} - ${req.originalUrl} - ${req.method} - ${req.ip}`);
   }
 
   res.status(statusCode).send(response);

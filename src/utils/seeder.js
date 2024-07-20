@@ -190,6 +190,6 @@ const seedDatabase = async () => {
 };
 
 seedDatabase().catch((err) => {
-  logger.error(err);
+  logger.error(`Error seeding database: ${err}`);
   mongoose.connection.close();
 });

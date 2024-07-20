@@ -13,7 +13,7 @@ const cache = (req, res, next) => {
       }
     })
     .catch((err) => {
-      logger.error(err);
+      logger.error(`Cache error: ${err}`);
       next();
     });
 };

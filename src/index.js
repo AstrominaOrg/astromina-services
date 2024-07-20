@@ -1,17 +1,14 @@
 const mongoose = require('mongoose');
-const { run } = require('probot');
 const app = require('./app');
-const gitbot = require('./gitbot');
 const config = require('./config/config');
 const logger = require('./config/logger');
 
 let server;
 mongoose.connect(config.mongoose.url, config.mongoose.options).then(() => {
   logger.info('Connected to MongoDB');
-  server = app.listen(config.appPort, () => {
-    logger.info(`Listening to port ${config.appPort}`);
+  server = app.listen(config.port, () => {
+    logger.info(`Listening to port ${config.port}`);
   });
-  run(gitbot);
 });
 
 const exitHandler = () => {
@@ -26,7 +23,7 @@ const exitHandler = () => {
 };
 
 const unexpectedErrorHandler = (error) => {
-  logger.error(error);
+  logger.error(`UNCAUGHT EXCEPTION: ${error.message}`);
   exitHandler();
 };
 

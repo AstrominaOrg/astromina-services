@@ -64,54 +64,6 @@ dcbot.once('ready', async () => {
   }
 });
 
-// dcbot.on('interactionCreate', async (interaction) => {
-//   if (!interaction.isCommand()) return;
-
-//   const { commandName } = interaction;
-
-//   if (commandName === 'create-thread') {
-//     const message = interaction.options.getString('message');
-//     const mentionedUsers = interaction.options.resolved.users;
-
-//     if (!mentionedUsers.size) {
-//       return interaction.reply({ content: 'You need to mention at least one user.', ephemeral: true });
-//     }
-
-//     try {
-//       const thread = await createPrivateThread({
-//         client: dcbot,
-//         channelId: interaction.channelId,
-//         threadName: `Private Thread with ${mentionedUsers.map((user) => user.username).join(', ')}`,
-//         initialMessage: `${interaction.user} created this thread. Message: ${message}`,
-//         mentionedUsers: Array.from(mentionedUsers.values()),
-//         reason: 'Thread requested by user',
-//       });
-
-//       await interaction.reply({ content: `Private thread created: <#${thread.id}>`, ephemeral: true });
-//     } catch (error) {
-//       logger.error('Error creating thread:', error);
-//       await interaction.reply({ content: 'There was an error creating the thread.', ephemeral: true });
-//     }
-//   } else if (commandName === 'request') {
-//     const message = interaction.options.getString('message');
-//     const user = interaction.options.getUser('username');
-
-//     try {
-//       await createPaymentConfirmation({
-//         client: dcbot,
-//         threadId: interaction.channelId,
-//         approvalMessage: message,
-//         user,
-//       });
-
-//       await interaction.reply({ content: 'Payment confirmation sent.', ephemeral: true });
-//     } catch (error) {
-//       logger.error('Error sending payment confirmation:', error);
-//       await interaction.reply({ content: 'There was an error sending the payment confirmation.', ephemeral: true });
-//     }
-//   }
-// });
-
 dcbot.on('interactionCreate', async (interaction) => {
   if (!interaction.isButton()) return;
 

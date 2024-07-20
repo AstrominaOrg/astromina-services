@@ -1,0 +1,67 @@
+services:
+  - name: node-app
+    type: web
+    runtime: node
+    repo: https://github.com/AstrominaOrg/astromina-services-temp
+    region: frankfurt
+    branch: main
+    buildCommand: yarn install
+    startCommand: yarn start
+    plan: starter
+    envVars:
+      - key: REDIS_HOST
+        fromService:
+          type: redis
+          name: lightning
+          property: host
+      - key: REDIS_PORT
+        fromService:
+          type: redis
+          name: lightning
+          property: port
+      - fromGroup: Astromina
+  - name: github-app
+    type: web
+    runtime: node
+    repo: https://github.com/AstrominaOrg/astromina-services
+    region: frankfurt
+    branch: main
+    buildCommand: yarn install
+    startCommand: yarn github
+    plan: starter
+    envVars:
+      - key: REDIS_HOST
+        fromService:
+          type: redis
+          name: lightning
+          property: host
+      - key: REDIS_PORT
+        fromService:
+          type: redis
+          name: lightning
+          property: port
+      - fromGroup: Astromina
+  - type: redis
+    name: lightning
+    ipAllowList:
+      - source: 0.0.0.0/0
+        description: everywhere
+    plan: free
+    region: frankfurt
+    maxmemoryPolicy: noeviction
+  - type: pserv
+    name: mongo
+    env: docker
+    plan: starter
+    repo: https://github.com/AstrominaOrg/mongodb
+    dockerContext: .
+    dockerfilePath: ./Dockerfile
+    region: frankfurt
+    autoDeploy: false
+    disk:
+      name: data
+      mountPath: /data/db
+      sizeGB: 2
+
+envVarGroups:
+  - name: Astromina
