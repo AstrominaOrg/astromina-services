@@ -88,6 +88,7 @@ const updateOrganizationMembers = async (organizationId, members) => {
 
   organization.members = members.map((member) => ({
     login: member.login,
+    avatar_url: member.avatar_url,
     role: member.role,
     canEdit:
       organization.members && organization.members.find((m) => m.login === member.login)
