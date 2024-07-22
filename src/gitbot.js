@@ -13,7 +13,7 @@ module.exports = (app) => {
   app.log.info('Probot app is running!');
 
   app.onAny(async (context) => {
-    app.log.info(`Event: ${context.payload.action}`);
+    app.log.info(`Event: ${context.payload.action} - ${context.event}`);
   });
 
   const handleError = async (context, handler) => {
@@ -34,6 +34,10 @@ module.exports = (app) => {
 
   app.on(['issues.closed', 'issues.edited', 'issues.labeled', 'issues.unlabeled', 'issues.reopened'], async (context) => {
     handleError(context, IssueEventService.handleIssueChange);
+  });
+
+  app.on('issues.deleted', async (context) => {
+    handleError(context, IssueEventService.handleIssueDeleted);
   });
 
   app.on('issues.deleted', async (context) => {

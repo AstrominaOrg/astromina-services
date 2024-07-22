@@ -3,6 +3,7 @@ const { wrapHandlerWithCheck } = require('./helper');
 const { createOrUpdateIssue, getIssueByIssueNumberAndRepositoryId } = require('../issue.service');
 const { sendThreadMessage } = require('../discord.service');
 const { savePullRequest } = require('../../utils/pr.utils');
+const logger = require('../../config/logger');
 
 async function handlePullRequestCreate(context) {
   const { pull_request: pullRequest, repository } = context.payload;
@@ -23,6 +24,7 @@ async function handlePullRequestClose(context) {
   let linkedIssues = await getLinkedIssues(repository.name, repository.owner.login, pullRequest.number, 5);
   linkedIssues = linkedIssues.repository.pullRequest.closingIssuesReferences.nodes.map((issue) => issue.number);
 
+  logger.info(`Pull request ${pullRequest.number} has been closed`);
   if (pullRequest.merged) {
     linkedIssues.forEach(async (issue) => {
       const issueDB = await getIssueByIssueNumberAndRepositoryId(issue, repository.node_id);

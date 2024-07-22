@@ -143,10 +143,15 @@ const sendThreadMessage = async ({ threadId, message, components }) => {
 };
 
 const tryAddThreadMember = async ({ user, issue }) => {
+  logger.info(
+    `Trying to add user ${user.github.username} ${user.discord.id} to thread for issue ${
+      issue.node_id || issue.issueId || issue.id
+    }`
+  );
+
   if (user && user.discord && user.discord.id !== null) {
     const discordId = user.discord.id;
     const userDB = await getIssue(issue.node_id || issue.issueId || issue.id);
-
     if (userDB && userDB.thread && userDB.thread.id) {
       await addThreadMember({ threadId: userDB.thread.id, userId: discordId });
     }

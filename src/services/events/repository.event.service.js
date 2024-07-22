@@ -1,3 +1,4 @@
+const { getRepository } = require('../github.service');
 const { createOrUpdateRepository, updateRepositoryByRepoId } = require('../repository.service');
 const { wrapHandlerWithCheck } = require('./helper');
 const { getRepository } = require('../github.service');

@@ -119,6 +119,7 @@ async function handlePriceCommand(context) {
 
   const thread = await getOrCreateThread({ issue: issueDB, price, assignees: allDiscordIds });
 
+  console.log('thread', thread);
   issueDB.thread = {
     id: thread.id,
     name: thread.name,
