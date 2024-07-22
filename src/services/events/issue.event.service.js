@@ -1,4 +1,4 @@
-const { updateIssue, deleteIssue, getIssue } = require('../issue.service');
+const { updateIssue, deleteIssue, getIssue, addManager } = require('../issue.service');
 const { removeThreadMember, tryAddThreadMember, getOrCreateThread } = require('../discord.service');
 const { getUser } = require('../user.service');
 const { wrapHandlerWithCheck } = require('./helper');
@@ -76,20 +76,44 @@ async function handlePriceCommand(context) {
   const issueId = issue.node_id;
 
   await updateIssue(issueId, { price });
-  // await sendComment(context, `Price has been updated to $${price}`);
 
-  const userDiscordIds = await Promise.all(
-    issue.assignees
-      .map(async (assignee) => {
-        const user = await getUser(assignee.login);
-        return user.discord.id;
-      })
-      .filter((discordId) => discordId !== null)
-  );
+  const senderDB = await getUser(sender.login);
+
+  if (senderDB !== null) {
+    await addManager(issueId, senderDB);
+  }
+  // await sendComment(context, `Price has been updated to $${price}`);
 
   const issueDB = await Issue.findOne({ issueId });
 
-  const thread = await getOrCreateThread({ issue: issueDB, price, assignees: userDiscordIds });
+  const userDiscordIds = await Promise.all(
+    issueDB.assignees
+      .filter((assignee) => assignee !== null)
+      .map(async (assignee) => {
+        const user = await getUser(assignee.login);
+        if (user === null || user.discord === null || user.discord.id === null) {
+          return null;
+        }
+        return user.discord.id;
+      })
+  );
+
+  const managersDiscordIds = await Promise.all(
+    issueDB.managers
+      .filter((manager) => manager !== null)
+      .map(async (manager) => {
+        const user = await getUser(manager.login);
+        if (user === null || user.discord === null || user.discord.id === null) {
+          return null;
+        }
+        return user.discord.id;
+      })
+  );
+
+  const allDiscordIds = [...userDiscordIds, ...managersDiscordIds].filter((id) => id !== null);
+
+  const thread = await getOrCreateThread({ issue: issueDB, price, assignees: allDiscordIds });
+
   await updateIssue(issueId, {
     thread: {
       id: thread.id,
@@ -97,6 +121,8 @@ async function handlePriceCommand(context) {
       members: [],
     },
   });
+
+  await tryAddThreadMember({ user: senderDB, issue: issueDB });
 }
 
 module.exports = {

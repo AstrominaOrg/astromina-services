@@ -115,8 +115,21 @@ async function updatePrice(issueId, price, priceManager) {
   await issue.save();
 }
 
+async function addManager(issueId, manager) {
+  const issue = await getIssue(issueId);
+
+  if (!issue) {
+    throw new ApiError(httpStatus.NOT_FOUND, 'Issue not found');
+  }
+
+  issue.managers.push(manager);
+
+  await issue.save();
+}
+
 module.exports = {
   getIssue,
+  addManager,
   updatePrice,
   createIssue,
   queryIssues,
