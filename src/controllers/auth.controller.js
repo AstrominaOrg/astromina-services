@@ -14,7 +14,7 @@ const githubCallback = catchAsync(async (req, res) => {
   res.cookie('accessToken', tokens.access.token, {
     httpOnly: true,
     secure: true,
-    sameSite: 'none',
+    sameSite: 'lax',
   });
 
   res.redirect(`${config.frontendUrl}`);

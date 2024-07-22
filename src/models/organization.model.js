@@ -51,14 +51,15 @@ const organizationSchema = new mongoose.Schema(
         type: String,
       },
     },
+    linkedin: {
+      url: {
+        type: String,
+      },
+    },
     members: {
       type: [
         {
           login: {
-            type: String,
-            required: true,
-          },
-          id: {
             type: String,
             required: true,
           },

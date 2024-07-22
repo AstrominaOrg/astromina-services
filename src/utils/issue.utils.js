@@ -11,7 +11,6 @@ const saveIssue = async (issue, repository) => {
     description: issue.body,
     assignees: issue.assignees.map((assignee) => ({
       login: assignee.login,
-      id: assignee.id,
       avatar_url: assignee.avatar_url || assignee.avatarUrl,
       rewarded: false,
       assigned_at: assignee.assigned_at || new Date(),

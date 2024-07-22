@@ -33,9 +33,6 @@ const issueSchema = new mongoose.Schema(
           avatar_url: {
             type: String,
           },
-          id: {
-            type: String,
-          },
           rewarded: {
             type: Boolean,
             default: false,

@@ -88,11 +88,10 @@ const updateOrganizationMembers = async (organizationId, members) => {
 
   organization.members = members.map((member) => ({
     login: member.login,
-    id: member.id,
     role: member.role,
     canEdit:
-      organization.members && organization.members.find((m) => m.id === member.id)
-        ? organization.members.find((m) => m.id === member.id).canEdit
+      organization.members && organization.members.find((m) => m.login === member.login)
+        ? organization.members.find((m) => m.login === member.login).canEdit
         : false,
   }));
 
@@ -112,14 +111,13 @@ const getTopContributors = async (organizationName) => {
   const issues = await Issue.find({ 'owner.login': organizationName }).lean();
   issues.forEach((issue) => {
     issue.assignees.forEach((assignee) => {
-      const key = assignee.id;
+      const key = assignee.login;
       if (contributorMap[key]) {
         contributorMap[key].count += 1;
         contributorMap[key].bounty += issue.price;
       } else {
         contributorMap[key] = {
           login: assignee.login,
-          id: assignee.id,
           avatar_url: assignee.avatar_url,
           count: 1,
           bounty: issue.price,

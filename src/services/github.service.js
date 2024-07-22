@@ -399,7 +399,6 @@ const getRepositoryIssues = async (org, repo) => {
 
         return {
           login: assignee.login,
-          id: assignee.id,
           avatar_url: assignee.avatarUrl,
           assigned_at,
         };
@@ -452,7 +451,6 @@ const getOrganizationMembers = async (org) => {
 
         return {
           login: member.login,
-          id: member.id,
           avatar_url: member.avatar_url,
           role,
         };

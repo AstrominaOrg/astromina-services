@@ -19,14 +19,14 @@ const ApiError = require('../utils/ApiError');
  * @param {string} params.reason - The reason for creating the thread.
  * @returns {Promise<ThreadChannel>} The created private thread.
  */
-async function createPrivateThread({ client, channelId, threadName, initialMessage, ids, autoArchiveDuration, reason }) {
+async function createPrivateThread({ channelId, threadName, initialMessage, ids, autoArchiveDuration, reason }) {
   try {
-    const channel = await client.channels.fetch(channelId);
+    const channel = await dcbot.channels.fetch(channelId);
     if (!channel || !channel.isTextBased()) {
       throw new Error('Invalid channel ID or the channel is not text-based.');
     }
 
-    const users = await Promise.all(ids.map((id) => client.users.fetch(id)));
+    const users = await Promise.all(ids.map((id) => dcbot.users.fetch(id)));
 
     const thread = await channel.threads.create({
       name: threadName,
@@ -166,11 +166,11 @@ const recoverUsersThreads = async (id) => {
     });
 };
 
-const getOrCreateThread = async ({ user, issue, price, assignees }) => {
+const getOrCreateThread = async ({ issue, price, assignees }) => {
   let thread;
 
-  if (user && user.thread && user.thread.id) {
-    thread = user.thread;
+  if (issue && issue.thread && issue.thread.id) {
+    thread = issue.thread;
     await sendThreadMessage({
       threadId: thread.id,
       message: `Price has been updated to $${price}`,
