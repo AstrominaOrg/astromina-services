@@ -4,7 +4,7 @@ services:
     runtime: node
     repo: https://github.com/AstrominaOrg/astromina-services
     region: frankfurt
-    branch: demo
+    branch: debug
     buildCommand: yarn install
     startCommand: yarn start
     plan: starter
