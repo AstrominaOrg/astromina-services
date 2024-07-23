@@ -74,7 +74,6 @@ async function handlePriceCommand(context) {
   if (!price || price < 0) {
     return;
   }
-
   const isMemberOfOrganization = await isMember(repository.owner.login, sender.login);
 
   if (!isMemberOfOrganization) {
@@ -119,7 +118,6 @@ async function handlePriceCommand(context) {
 
   const thread = await getOrCreateThread({ issue: issueDB, price, assignees: allDiscordIds });
 
-  console.log('thread', thread);
   issueDB.thread = {
     id: thread.id,
     name: thread.name,
