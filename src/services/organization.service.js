@@ -31,7 +31,7 @@ async function getOrganization(organizationId) {
 }
 
 async function getOrganizationByName(organizationName) {
-  return Organization.findOne({ title: organizationName });
+  return Organization.findOne({ title: { $regex: organizationName, $options: 'i' } });
 }
 
 /**
@@ -181,7 +181,9 @@ const isMember = async (organizationName, username) => {
     return false;
   }
 
-  return organization.members.some((member) => member.login === username);
+  const isMemberOfOrganization = organization.members.some((member) => member.login === username);
+
+  return isMemberOfOrganization;
 };
 
 module.exports = {

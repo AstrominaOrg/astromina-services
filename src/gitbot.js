@@ -32,12 +32,13 @@ module.exports = (app) => {
     handleError(context, IssueEventService.handleIssueCreate);
   });
 
-  app.on(
-    ['issues.closed', 'issues.deleted', 'issues.edited', 'issues.deleted', 'issues.labeled', 'issues.unlabeled'],
-    async (context) => {
-      handleError(context, IssueEventService.handleIssueChange);
-    }
-  );
+  app.on(['issues.closed', 'issues.edited', 'issues.labeled', 'issues.unlabeled', 'issues.reopened'], async (context) => {
+    handleError(context, IssueEventService.handleIssueChange);
+  });
+
+  app.on('issues.deleted', async (context) => {
+    handleError(context, IssueEventService.handleIssueDeleted);
+  });
 
   app.on('issues.transferred', async (context) => {
     handleError(context, IssueEventService.handleIssueTransfer);

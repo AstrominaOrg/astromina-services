@@ -25,8 +25,8 @@ async function handlePullRequestClose(context) {
 
   if (pullRequest.merged) {
     linkedIssues.forEach(async (issue) => {
-      const issueDB = await getIssueByIssueNumberAndRepositoryId(issue.number, repository.node_id);
-      if (issueDB && issueDB.thread.id) {
+      const issueDB = await getIssueByIssueNumberAndRepositoryId(issue, repository.node_id);
+      if (issueDB && issueDB.thread && issueDB.thread.id) {
         await createOrUpdateIssue({
           issueId: issueDB.issueId,
           solved: true,
@@ -34,7 +34,7 @@ async function handlePullRequestClose(context) {
 
         await sendThreadMessage({
           threadId: issueDB.thread.id,
-          message: `Issue ${issue.number} has been solved by pull request [${pullRequest.title}](${pullRequest.html_url})! ${
+          message: `Issue ${issue} has been solved by pull request [${pullRequest.title}](${pullRequest.html_url})! ${
             issueDB.price
           } to ${issueDB.assignees
             .map((assignee) => `[${assignee.login}](https://github.com/${assignee.login})`)

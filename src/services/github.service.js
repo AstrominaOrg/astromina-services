@@ -11,7 +11,6 @@ const { createOrUpdateRepository } = require('./repository.service');
 const { createOrUpdateOrganization } = require('./organization.service');
 const { saveIssue } = require('../utils/issue.utils');
 const { savePullRequest } = require('../utils/pr.utils');
-const mongoose = require('mongoose');
 
 const linkedIssuesQuery = `
 query getLinkedIssues(
@@ -241,13 +240,33 @@ query($userName:String!) {
 }
 `;
 
+const getRepositoryQuery = `
+query getRepository($owner: String!, $name: String!) {
+  repository(owner: $owner, name: $name) {
+    id
+    name
+    owner {
+      login
+      avatarUrl
+    }
+    url
+    description
+    stargazerCount
+    forkCount
+    nameWithOwner
+    visibility
+    isPrivate
+  }
+}
+`;
+
 let octokitInstance;
 
 let requestCount = 0;
 /**
  * Initializes the Octokit instance.
  */
-const initializeOctokit = async () => {
+const initializeOctokit = async (login) => {
   const { App } = await import('octokit');
 
   const app = new App({
@@ -255,7 +274,15 @@ const initializeOctokit = async () => {
     privateKey: config.github.privateKey,
   });
 
-  const installationId = config.github.appInstallationId;
+  logger.info(`Initializing Octokit instance for ${login || 'the app'}`);
+
+  const [installation] = [
+    await app.octokit.request('GET /orgs/{org}/installation', { org: login }).catch((error) => null),
+    await app.octokit.request('GET /users/{username}/installation', { username: login }).catch((error) => null),
+  ].filter(Boolean);
+
+  const installationId = installation?.data?.id || config.github.appInstallationId;
+
   octokitInstance = await app.getInstallationOctokit(installationId);
 
   octokitInstance.hook.before('request', async (options) => {
@@ -274,9 +301,7 @@ const initializeOctokit = async () => {
  * @returns {Promise<Object>} The linked issues data.
  */
 const getLinkedIssues = async (repository, owner, prNumber, maxIssues) => {
-  if (!octokitInstance) {
-    await initializeOctokit();
-  }
+  await initializeOctokit(owner);
 
   try {
     const issueData = await octokitInstance.graphql({
@@ -295,9 +320,7 @@ const getLinkedIssues = async (repository, owner, prNumber, maxIssues) => {
 };
 
 const getRepositoryPullRequests = async (org, repo) => {
-  if (!octokitInstance) {
-    await initializeOctokit();
-  }
+  await initializeOctokit(org);
 
   let allPullRequests = [];
   let pullRequestsAfter = null;
@@ -358,9 +381,7 @@ const getRepositoryPullRequests = async (org, repo) => {
 };
 
 const getRepositoryIssues = async (org, repo) => {
-  if (!octokitInstance) {
-    await initializeOctokit();
-  }
+  await initializeOctokit(org);
 
   let allIssues = [];
   let issuesAfter = null;
@@ -426,9 +447,7 @@ const getRepositoryIssues = async (org, repo) => {
  * @returns {Promise<Object>} The members of the organization.
  */
 const getOrganizationMembers = async (org) => {
-  if (!octokitInstance) {
-    await initializeOctokit();
-  }
+  await initializeOctokit(org);
 
   try {
     const membersData = await octokitInstance.rest.orgs.listMembers({
@@ -465,9 +484,7 @@ const getOrganizationMembers = async (org) => {
 };
 
 const getOrganizationRepos = async (org) => {
-  if (!octokitInstance) {
-    await initializeOctokit();
-  }
+  await initializeOctokit(org);
 
   let allRepos = [];
   let reposAfter = null;
@@ -498,16 +515,14 @@ const getOrganizationRepos = async (org) => {
  * @returns {Promise<Void>}
  */
 const recoverOrganization = async (name) => {
-  if (!octokitInstance) {
-    await initializeOctokit();
-  }
+  await initializeOctokit(name);
 
   const organization = await getOrganization(name);
 
   await createOrUpdateOrganization({
     organizationId: organization.data.node_id,
     title: organization.data.login,
-    name: organization.data.name,
+    name: organization.data.name || organization.data.login,
     website: {
       url: organization.data.blog,
     },
@@ -565,9 +580,7 @@ const recoverOrganization = async (name) => {
  * @returns {Promise<Object>} The organization.
  */
 const getOrganization = async (org) => {
-  if (!octokitInstance) {
-    await initializeOctokit();
-  }
+  await initializeOctokit(org);
 
   try {
     const issuesData = await octokitInstance.rest.orgs.get({
@@ -587,9 +600,7 @@ const getOrganization = async (org) => {
  * @returns {Promise<Object>} The contributions of the user.
  */
 const getUserContributions = async (userName) => {
-  if (!octokitInstance) {
-    await initializeOctokit();
-  }
+  await initializeOctokit();
 
   try {
     const contributionsData = await octokitInstance.graphql(userContributionsQuery, {
@@ -616,9 +627,7 @@ const getUserContributions = async (userName) => {
 };
 
 const overrideAssignee = async (username) => {
-  if (!octokitInstance) {
-    await initializeOctokit();
-  }
+  await initializeOctokit();
 
   const githubUser = await octokitInstance.rest.users.getByUsername({
     username,
@@ -645,9 +654,7 @@ const overrideAssignee = async (username) => {
 };
 
 const overrideManager = async (username) => {
-  if (!octokitInstance) {
-    await initializeOctokit();
-  }
+  await initializeOctokit();
 
   const githubUser = await octokitInstance.rest.users.getByUsername({
     username,
@@ -669,9 +676,7 @@ const overrideManager = async (username) => {
 };
 
 const overrideThread = async (threadId, threadName, threadMember) => {
-  if (!octokitInstance) {
-    await initializeOctokit();
-  }
+  await initializeOctokit();
 
   const issues = (await queryIssues({}, { limit: 100 })).results;
 
@@ -687,8 +692,25 @@ const overrideThread = async (threadId, threadName, threadMember) => {
   }
 };
 
+const getRepository = async (owner, name) => {
+  await initializeOctokit(owner);
+
+  try {
+    const repository = await octokitInstance.graphql(getRepositoryQuery, {
+      owner,
+      name,
+    });
+
+    return repository;
+  } catch (error) {
+    logger.error('Error fetching repository:', error);
+    throw error;
+  }
+};
+
 module.exports = {
   getLinkedIssues,
+  getRepository,
   overrideManager,
   overrideAssignee,
   overrideThread,

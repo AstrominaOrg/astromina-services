@@ -30,25 +30,26 @@ const getIssues = catchAsync(async (req, res) => {
   }
 
   if (req.query.assigneeUsername) {
-    filter.assignees = { $elemMatch: { login: req.query.assigneeUsername } };
+    filter.assignees = { $elemMatch: { login: { $regex: req.query.assigneeUsername, $options: 'i' } } };
   }
 
   if (req.query.ownerLogin) {
-    filter['owner.login'] = req.query.ownerLogin;
+    filter['owner.login'] = { $regex: req.query.ownerLogin, $options: 'i' };
   }
 
   if (req.query.managerLogin) {
-    filter.managers = { login: req.query.managerLogin };
+    filter.managers = { $elemMatch: { login: { $regex: req.query.managerLogin, $options: 'i' } } };
   }
 
   if (req.query.untouched) {
     filter.assignees = { $size: 0 };
-  } else {
-    filter.assignees = { $gt: [] };
+  }
+  if (req.query.touched) {
+    filter.assignees = { $not: { $size: 0 } };
   }
 
   if (req.query.repositoryId) {
-    filter.repository = { id: req.query.repositoryId };
+    filter['repository.id'] = req.query.repositoryId;
   }
 
   if (req.query.labels) {
@@ -62,12 +63,11 @@ const getIssues = catchAsync(async (req, res) => {
 
   if (req.query.hasBounty) {
     filter.price = { $gt: 0 };
-  } else {
+  } else if (req.query.hasNoBounty) {
     filter.price = 0;
   }
 
   const options = pick(req.query, ['sortBy', 'limit', 'page']);
-  options.select = '-thread';
   const result = await issueService.queryIssues(filter, options);
 
   res.send(result);

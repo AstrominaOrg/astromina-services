@@ -31,32 +31,22 @@ const getBountyTotals = {
 
 const updateProfile = {
   body: Joi.object().keys({
-    description: Joi.string().allow(''),
-    twitter: Joi.object()
-      .keys({
-        url: Joi.string().uri().allow(''),
-      })
-      .optional(),
-    website: Joi.object()
-      .keys({
-        url: Joi.string().uri().allow(''),
-      })
-      .optional(),
-    telegram: Joi.object()
-      .keys({
-        url: Joi.string().uri().allow(''),
-      })
-      .optional(),
-    linkedin: Joi.object()
-      .keys({
-        url: Joi.string().uri().allow(''),
-      })
-      .optional(),
-    discord: Joi.object()
-      .keys({
-        url: Joi.string().uri().allow(''),
-      })
-      .optional(),
+    bio: Joi.string().allow(''),
+    twitter: Joi.object().keys({
+      url: Joi.string().allow(''),
+    }),
+    website: Joi.object().keys({
+      url: Joi.string().allow(''),
+    }),
+    telegram: Joi.object().keys({
+      url: Joi.string().allow(''),
+    }),
+    linkedin: Joi.object().keys({
+      url: Joi.string().allow(''),
+    }),
+    availableDays: Joi.number(),
+    location: Joi.string(),
+    skills: Joi.array().items(Joi.string()),
   }),
 };
 

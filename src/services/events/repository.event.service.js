@@ -1,34 +1,33 @@
 const { createOrUpdateRepository, updateRepositoryByRepoId } = require('../repository.service');
 const { wrapHandlerWithCheck } = require('./helper');
+const { getRepository } = require('../github.service');
 
 async function handleRepositoryAdd(context) {
   const { repository, installation } = context.payload;
 
+  const owner = repository.full_name.split('/')[0];
+  const githubRepo = (await getRepository(owner, repository.name)).repository;
+
   await createOrUpdateRepository({
-    repositoryId: repository.node_id,
-    name: repository.name,
-    url: repository.html_url,
-    full_name: repository.full_name,
-    owner: installation.account.login,
+    repositoryId: githubRepo.id,
+    name: githubRepo.name,
+    url: githubRepo.url,
+    full_name: githubRepo.nameWithOwner,
+    owner: {
+      login: githubRepo.owner.login,
+      avatar_url: githubRepo.owner.avatarUrl,
+    },
     type: installation.account.type,
-    private: repository.private,
+    private: githubRepo.isPrivate,
     state: 'pending',
   });
 }
 
 async function handleRepositoryRemove(context) {
-  const { repository, installation } = context.payload;
+  const { repository } = context.payload;
 
   await createOrUpdateRepository({
     repositoryId: repository.node_id,
-    name: repository.name,
-    full_name: repository.full_name,
-    owner: {
-      login: installation.account.login,
-      avatar_url: installation.account.avatar_url,
-    },
-    type: installation.account.type,
-    private: repository.private,
     state: 'deleted',
   });
 }

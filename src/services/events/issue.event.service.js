@@ -22,6 +22,12 @@ async function handleIssueChange(context) {
   await saveIssue(issue, repository);
 }
 
+async function handleIssueDeleted(context) {
+  const { issue } = context.payload;
+
+  await deleteIssue(issue.node_id);
+}
+
 async function handleAssigned(context) {
   const { issue, assignee, repository } = context.payload;
 
@@ -69,7 +75,9 @@ async function handlePriceCommand(context) {
     return;
   }
 
-  if (!isMember(repository.owner.login, sender.login)) {
+  const isMemberOfOrganization = await isMember(repository.owner.login, sender.login);
+
+  if (!isMemberOfOrganization) {
     return;
   }
 
@@ -77,11 +85,8 @@ async function handlePriceCommand(context) {
 
   await updateIssue(issueId, { price });
 
-  const senderDB = await getUser(sender.login);
+  await addManager(issueId, sender);
 
-  if (senderDB !== null) {
-    await addManager(issueId, senderDB);
-  }
   // await sendComment(context, `Price has been updated to $${price}`);
 
   const issueDB = await Issue.findOne({ issueId });
@@ -114,6 +119,12 @@ async function handlePriceCommand(context) {
 
   const thread = await getOrCreateThread({ issue: issueDB, price, assignees: allDiscordIds });
 
+  issueDB.thread = {
+    id: thread.id,
+    name: thread.name,
+    members: [],
+  };
+
   await updateIssue(issueId, {
     thread: {
       id: thread.id,
@@ -122,7 +133,11 @@ async function handlePriceCommand(context) {
     },
   });
 
-  await tryAddThreadMember({ user: senderDB, issue: issueDB });
+  const senderDB = await getUser(sender.login);
+
+  if (senderDB) {
+    await tryAddThreadMember({ user: senderDB, issue: issueDB });
+  }
 }
 
 module.exports = {
@@ -132,4 +147,5 @@ module.exports = {
   handleAssigned: wrapHandlerWithCheck(handleAssigned),
   handleIssueChange: wrapHandlerWithCheck(handleIssueChange),
   handleUnassigned: wrapHandlerWithCheck(handleUnassigned),
+  handleIssueDeleted: wrapHandlerWithCheck(handleIssueDeleted),
 };

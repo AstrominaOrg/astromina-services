@@ -58,7 +58,7 @@ const getMyManagedIssues = catchAsync(async (req, res) => {
 
   if (req.query.untouched) {
     filter.assignees = { $size: 0 };
-  } else {
+  } else if (req.query.touched) {
     filter.assignees = { $gt: [] };
   }
 
@@ -76,7 +76,7 @@ const getMyAssignedIssues = catchAsync(async (req, res) => {
 
   if (req.query.untouched) {
     filter.assignees = { $size: 0 };
-  } else {
+  } else if (req.query.touched) {
     filter.assignees = { $gt: [] };
   }
 

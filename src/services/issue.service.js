@@ -1,6 +1,7 @@
 const httpStatus = require('http-status');
 const { Issue } = require('../models');
 const ApiError = require('../utils/ApiError');
+const logger = require('../config/logger');
 
 /**
  * Create an issue
@@ -21,7 +22,8 @@ const createIssue = async (issueBody) => {
  * @returns {Promise<QueryResult>}
  */
 const queryIssues = async (filter, options) => {
-  const issues = await Issue.paginate(filter, { ...options, select: '-thread' });
+  logger.info(`Querying issues with filter: ${JSON.stringify(filter)} and options: ${JSON.stringify(options)}`);
+  const issues = await Issue.paginate(filter, options);
   return issues;
 };
 
@@ -30,7 +32,7 @@ const queryIssues = async (filter, options) => {
  * @returns {Promise<Issue>}
  */
 async function getIssue(issueId) {
-  const issue = await queryIssues({ issueId });
+  const issue = await queryIssues({ issueId }, { limit: 1 });
 
   return issue.results[0];
 }
@@ -41,13 +43,13 @@ async function getIssue(issueId) {
  * @returns {Promise<Issue>}
  */
 async function getIssueByIssueNumberAndRepositoryId(issueNumber, repositoryId) {
-  const issue = await queryIssues({ number: issueNumber, 'repository.id': repositoryId });
+  const issue = await queryIssues({ number: issueNumber, 'repository.id': repositoryId }, { limit: 1 });
 
   return issue.results[0];
 }
 
 async function getIssueByOwnerAndRepoAndIssueNumber(owner, repo, issueNumber) {
-  const issue = await queryIssues({ 'owner.login': owner, 'repository.name': repo, number: issueNumber });
+  const issue = await queryIssues({ 'owner.login': owner, 'repository.name': repo, number: issueNumber }, { limit: 1 });
 
   return issue.results[0];
 }
@@ -89,6 +91,7 @@ const deleteIssue = async (issueId) => {
  */
 async function createOrUpdateIssue(issueBody) {
   const issue = await getIssue(issueBody.issueId);
+
   if (issue) {
     return updateIssue(issueBody.issueId, issueBody);
   }
