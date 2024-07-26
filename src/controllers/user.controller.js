@@ -25,7 +25,7 @@ const getMe = catchAsync(async (req, res) => {
 });
 
 const getContributedProjects = catchAsync(async (req, res) => {
-  const result = await userService.getContributedProjects(req.params.username);
+  const result = await userService.getContributedProjects(req.params.username, req.authUser);
   res.send(result);
 });
 
@@ -36,10 +36,21 @@ const getUserGithubActivity = catchAsync(async (req, res) => {
 });
 
 const getUserActivity = catchAsync(async (req, res) => {
-  const result = await issueService.queryIssues(
-    { assignees: { $elemMatch: { login: req.params.username } }, state: 'closed', solved: true },
-    { limit: 5, sortBy: 'solved_at:desc' }
-  );
+  const filter = {
+    assignees: { $elemMatch: { login: req.params.username } },
+    state: 'closed',
+    solved: true,
+  };
+
+  if (req.authUser) {
+    const authUserLogin = req.authUser.github.username;
+    filter.$or = [{ private: false }, { 'collaborators.login': authUserLogin }];
+  } else {
+    filter.private = false;
+  }
+
+  const options = { limit: 5, sortBy: 'solved_at:desc' };
+  const result = await issueService.queryIssues(filter, options);
   res.send(result);
 });
 

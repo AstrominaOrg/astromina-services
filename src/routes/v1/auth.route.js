@@ -1,7 +1,7 @@
 const express = require('express');
 const passport = require('passport');
 const validate = require('../../middlewares/validate');
-const { auth } = require('../../middlewares/auth');
+const { authorize, authenticate } = require('../../middlewares/auth');
 const authValidation = require('../../validations/auth.validation');
 const authController = require('../../controllers/auth.controller');
 
@@ -17,7 +17,7 @@ router.get(
   authController.githubCallback
 );
 
-router.get('/discord', auth('discord'), authController.discord);
+router.get('/discord', authenticate, authorize('discord'), authController.discord);
 router.get(
   '/discord/callback',
   passport.authenticate('discord', { failureRedirect: '/login' }),

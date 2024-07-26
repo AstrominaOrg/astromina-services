@@ -114,30 +114,4 @@ module.exports = (app) => {
   app.on('pull_request.closed', async (context) => {
     handleError(context, PullRequestEventService.handlePullRequestClose);
   });
-
-  /*
-  ERROR HANDLING
-  */
-  // Error handler function
-
-  const exitHandler = () => {
-    app.log.info('Exiting...');
-    process.exit(1);
-  };
-
-  // Global error handlers
-  process.on('uncaughtException', (error) => {
-    app.log.error(`UNCAUGHT EXCEPTION: ${error.message}`);
-    exitHandler();
-  });
-
-  process.on('unhandledRejection', (error) => {
-    app.log.error(`UNHANDLED REJECTION: ${error.message}`);
-    exitHandler();
-  });
-
-  process.on('SIGTERM', () => {
-    app.log.info('SIGTERM received');
-    exitHandler();
-  });
 };

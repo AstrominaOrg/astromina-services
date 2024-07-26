@@ -26,6 +26,18 @@ const repositorySchema = new mongoose.Schema(
         required: true,
       },
     },
+    collaborators: [
+      {
+        login: {
+          type: String,
+          required: true,
+        },
+        avatar_url: {
+          type: String,
+          required: true,
+        },
+      },
+    ],
     url: {
       type: String,
       required: true,

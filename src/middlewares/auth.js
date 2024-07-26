@@ -4,32 +4,38 @@ const ApiError = require('../utils/ApiError');
 const { roleRights } = require('../config/roles');
 const { organizationService } = require('../services');
 
-const verifyCallback = (req, resolve, reject, requiredRights) => async (err, user, info) => {
-  if (err || info || !user) {
-    return reject(new ApiError(httpStatus.UNAUTHORIZED, 'Please authenticate'));
-  }
-
-  req.authUser = user;
-
-  if (requiredRights.length) {
-    const userRights = roleRights.get(user.role);
-    const hasRequiredRights = requiredRights.every((requiredRight) => userRights.includes(requiredRight));
-    if (!hasRequiredRights) {
-      return reject(new ApiError(httpStatus.FORBIDDEN, 'Forbidden'));
-    }
+const verifyCallback = (req, resolve) => async (err, user) => {
+  if (user) {
+    req.authUser = user;
   }
 
   resolve();
 };
 
-const auth =
+const authenticate = async (req, res, next) => {
+  return new Promise((resolve, reject) => {
+    passport.authenticate('jwt', { session: false }, verifyCallback(req, resolve, reject))(req, res, next);
+  })
+    .then(() => next())
+    .catch((err) => next(err));
+};
+
+const authorize =
   (...requiredRights) =>
   async (req, res, next) => {
-    return new Promise((resolve, reject) => {
-      passport.authenticate('jwt', { session: false }, verifyCallback(req, resolve, reject, requiredRights))(req, res, next);
-    })
-      .then(() => next())
-      .catch((err) => next(err));
+    if (!req.authUser) {
+      return next(new ApiError(httpStatus.UNAUTHORIZED, 'Please authenticate'));
+    }
+
+    if (requiredRights.length) {
+      const userRights = roleRights.get(req.authUser.role);
+      const hasRequiredRights = requiredRights.every((requiredRight) => userRights.includes(requiredRight));
+      if (!hasRequiredRights) {
+        return next(new ApiError(httpStatus.FORBIDDEN, 'Forbidden'));
+      }
+    }
+
+    next();
   };
 
 const organizationMember = async (req, res, next) => {
@@ -46,6 +52,7 @@ const organizationMember = async (req, res, next) => {
 };
 
 module.exports = {
-  auth,
+  authenticate,
+  authorize,
   organizationMember,
 };

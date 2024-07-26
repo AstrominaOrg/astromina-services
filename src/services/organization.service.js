@@ -100,7 +100,7 @@ const updateOrganizationMembers = async (organizationId, members) => {
   return organization;
 };
 
-const getTopContributors = async (organizationName) => {
+const getTopContributors = async (organizationName, authUser) => {
   const organization = await getOrganizationByName(organizationName);
 
   if (!organization) {
@@ -109,7 +109,16 @@ const getTopContributors = async (organizationName) => {
 
   const contributorMap = {};
 
-  const issues = await Issue.find({ 'owner.login': organizationName }).lean();
+  const filter = { 'owner.login': organizationName };
+
+  if (authUser) {
+    const authUserLogin = authUser.github.username;
+    filter.$or = [{ private: false }, { 'collaborators.login': authUserLogin }];
+  } else {
+    filter.private = false;
+  }
+
+  const issues = await Issue.find(filter).lean();
   issues.forEach((issue) => {
     issue.assignees.forEach((assignee) => {
       const key = assignee.login;
@@ -131,27 +140,6 @@ const getTopContributors = async (organizationName) => {
   contributors.sort((a, b) => b.count - a.count);
 
   return contributors.slice(0, 10);
-};
-
-const getBountyTotals = async (organizationName) => {
-  const organization = await getOrganizationByName(organizationName);
-  if (!organization) {
-    throw new ApiError(httpStatus.NOT_FOUND, 'Organization not found');
-  }
-
-  let totalRewarded = 0;
-  let totalActive = 0;
-
-  const issues = await Issue.find({ 'owner.login': organizationName }).lean();
-  issues.forEach((issue) => {
-    if (issue.solved) {
-      totalRewarded += issue.price;
-    } else {
-      totalActive += issue.price;
-    }
-  });
-
-  return { totalRewarded, totalActive };
 };
 
 const createOrUpdateOrganization = async (organizationBody) => {
@@ -190,7 +178,6 @@ module.exports = {
   isMember,
   updateProfile,
   getOrganization,
-  getBountyTotals,
   getTopContributors,
   queryOrganizations,
   getManagedProjects,

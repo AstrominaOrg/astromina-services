@@ -197,18 +197,27 @@ const getUserByDiscordId = async (discordId) => {
   return User.findOne({ 'discord.id': discordId });
 };
 
-const getContributedProjects = async (username) => {
+const getContributedProjects = async (username, authUser) => {
   const user = await getUser(username);
   if (!user) {
     throw new ApiError(httpStatus.NOT_FOUND, 'User not found');
   }
 
+  const match = {
+    'assignees.login': username,
+    solved: true,
+  };
+
+  if (authUser) {
+    const authUserLogin = authUser.github.username;
+    match.$or = [{ private: false }, { 'collaborators.login': authUserLogin }];
+  } else {
+    match.private = false;
+  }
+
   const totalContributions = await Issue.aggregate([
     {
-      $match: {
-        'assignees.login': username,
-        solved: true,
-      },
+      $match: match,
     },
     {
       $group: {

@@ -44,6 +44,7 @@ const getIssues = catchAsync(async (req, res) => {
   if (req.query.untouched) {
     filter.assignees = { $size: 0 };
   }
+
   if (req.query.touched) {
     filter.assignees = { $not: { $size: 0 } };
   }
@@ -63,8 +64,17 @@ const getIssues = catchAsync(async (req, res) => {
 
   if (req.query.hasBounty) {
     filter.price = { $gt: 0 };
-  } else if (req.query.hasNoBounty) {
+  }
+
+  if (req.query.hasNoBounty) {
     filter.price = 0;
+  }
+
+  if (req.authUser) {
+    const authUserLogin = req.authUser.github.username;
+    filter.$or = [{ private: false }, { 'collaborators.login': authUserLogin }];
+  } else {
+    filter.private = false;
   }
 
   const options = pick(req.query, ['sortBy', 'limit', 'page']);
@@ -82,6 +92,19 @@ const getIssue = catchAsync(async (req, res) => {
   if (!issue) {
     throw new ApiError(httpStatus.NOT_FOUND, 'Issue not found');
   }
+
+  if (issue.private) {
+    if (!req.authUser) {
+      throw new ApiError(httpStatus.UNAUTHORIZED, 'Please authenticate');
+    }
+
+    const isCollaborator = issue.collaborators.some((collaborator) => collaborator.login === req.authUser.github.username);
+
+    if (!isCollaborator) {
+      throw new ApiError(httpStatus.FORBIDDEN, 'Access denied. You are not a collaborator for this issue.');
+    }
+  }
+
   res.send(issue);
 });
 

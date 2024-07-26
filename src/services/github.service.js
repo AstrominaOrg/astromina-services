@@ -184,6 +184,12 @@ query ($org: String!, $reposFirst: Int!, $reposAfter: String) {
           login
           avatarUrl
         }
+        collaborators {
+          nodes {
+            login
+            avatarUrl
+          }
+        }
       }
       pageInfo {
         endCursor
@@ -256,6 +262,12 @@ query getRepository($owner: String!, $name: String!) {
     nameWithOwner
     visibility
     isPrivate
+    collaborators {
+      nodes {
+        login
+        avatarUrl
+      }
+    }
   }
 }
 `;
@@ -450,15 +462,24 @@ const getOrganizationMembers = async (org) => {
   await initializeOctokit(org);
 
   try {
-    const membersData = await octokitInstance.rest.orgs.listMembers({
+    const allMembersData = await octokitInstance.rest.orgs.listMembers({
       org,
     });
 
-    const members = membersData.data.map((member) => member);
+    const allMembers = allMembersData.data;
+
+    const publicMembersData = await octokitInstance.rest.orgs.listPublicMembers({
+      org,
+    });
+
+    const publicMembers = publicMembersData.data;
+
+    const publicMemberLogins = new Set(publicMembers.map((member) => member.login));
 
     const roles = await Promise.all(
-      members.map(async (member) => {
+      allMembers.map(async (member) => {
         let role = 'member';
+        let visibility = publicMemberLogins.has(member.login) ? 'public' : 'private';
         try {
           const roleData = await octokitInstance.rest.orgs.getMembershipForUser({
             org,
@@ -472,6 +493,7 @@ const getOrganizationMembers = async (org) => {
           login: member.login,
           avatar_url: member.avatar_url,
           role,
+          visibility,
         };
       })
     );
@@ -562,6 +584,10 @@ const recoverOrganization = async (name) => {
         login: repo.owner.login,
         avatar_url: repo.owner.avatarUrl,
       },
+      collaborators: repo.collaborators.nodes.map((collaborator) => ({
+        login: collaborator.login,
+        avatar_url: collaborator.avatarUrl,
+      })),
       type: 'Organization',
       private: repo.visibility === 'PRIVATE',
       state: 'pending',

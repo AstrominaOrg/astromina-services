@@ -12,6 +12,18 @@ const getRepositories = catchAsync(async (req, res) => {
     filter['owner.login'] = req.query.ownerLogin;
   }
 
+  if (req.authUser) {
+    filter.$or = [
+      { private: false },
+      {
+        private: true,
+        'collaborators.login': req.authUser.github.username,
+      },
+    ];
+  } else {
+    filter.private = false;
+  }
+
   const result = await repositoryService.queryRepositories(filter, options);
   res.send(result);
 });
@@ -21,6 +33,21 @@ const getRepository = catchAsync(async (req, res) => {
   if (!repository) {
     throw new ApiError(httpStatus.NOT_FOUND, 'Repository not found');
   }
+
+  if (repository.private) {
+    if (!req.authUser) {
+      throw new ApiError(httpStatus.UNAUTHORIZED, 'Please authenticate');
+    }
+
+    const isCollaborator = repository.collaborators.some(
+      (collaborator) => collaborator.login === req.authUser.github.username
+    );
+
+    if (!isCollaborator) {
+      throw new ApiError(httpStatus.FORBIDDEN, 'Access denied. You are not a collaborator for this repository.');
+    }
+  }
+
   res.send(repository);
 });
 

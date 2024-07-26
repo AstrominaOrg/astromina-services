@@ -69,6 +69,11 @@ const organizationSchema = new mongoose.Schema(
           role: {
             type: String,
           },
+          visibility: {
+            type: String,
+            enum: ['public', 'private'],
+            default: 'public',
+          },
           canEdit: {
             type: Boolean,
             default: false,

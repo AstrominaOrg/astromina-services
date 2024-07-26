@@ -112,6 +112,23 @@ const issueSchema = new mongoose.Schema(
     solved_at: {
       type: Date,
     },
+    collaborators: [
+      {
+        login: {
+          type: String,
+          required: true,
+        },
+        avatar_url: {
+          type: String,
+          required: true,
+        },
+      },
+    ],
+    private: {
+      type: Boolean,
+      required: true,
+      default: false,
+    },
   },
   {
     timestamps: true,
@@ -121,6 +138,22 @@ const issueSchema = new mongoose.Schema(
 issueSchema.plugin(toJSON);
 issueSchema.plugin(paginate);
 issueSchema.index({ issueId: 1 }, { unique: true });
+
+issueSchema.pre('save', async function (next) {
+  try {
+    const Repository = mongoose.model('Repository');
+    const repo = await Repository.findOne({ repositoryId: this.repository.id });
+    if (repo) {
+      this.collaborators = repo.collaborators;
+      this.private = repo.private;
+    } else {
+      return next(new Error('Repository not found'));
+    }
+  } catch (err) {
+    return next(err);
+  }
+  next();
+});
 
 issueSchema.post('save', async function () {
   await updateRepositoryStats(this.repository.id);

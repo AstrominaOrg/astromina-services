@@ -3,6 +3,7 @@ const pick = require('../utils/pick');
 const ApiError = require('../utils/ApiError');
 const catchAsync = require('../utils/catchAsync');
 const { organizationService } = require('../services');
+const logger = require('../config/logger');
 
 const getOrganizations = catchAsync(async (req, res) => {
   const filter = pick(req.query, ['name', 'state']);
@@ -12,8 +13,35 @@ const getOrganizations = catchAsync(async (req, res) => {
   }
 
   const options = pick(req.query, ['sortBy', 'limit', 'page']);
-  const result = await organizationService.queryOrganizations(filter, options);
-  res.send(result);
+  const organizations = await organizationService.queryOrganizations(filter, options);
+
+  const authUserLogin = req.authUser ? req.authUser.github.username : null;
+
+  const filteredOrganizations = organizations.results.map((organization) => {
+    const newOrganization = { ...organization._doc };
+
+    if (authUserLogin !== null) {
+      logger.info('authUserLogin', authUserLogin);
+      const isMember = newOrganization.members.some((member) => member.login === authUserLogin);
+      if (!isMember) {
+        logger.info('isMember', isMember);
+        newOrganization.members = newOrganization.members.filter((member) => !member.visibility === 'public');
+      }
+    } else {
+      logger.info('authUserLogin, no user');
+      newOrganization.members = newOrganization.members.filter((member) => !member.visibility === 'public');
+    }
+
+    return newOrganization;
+  });
+
+  res.send({
+    results: filteredOrganizations,
+    page: organizations.page,
+    limit: organizations.limit,
+    totalPages: organizations.totalPages,
+    totalResults: organizations.totalResults,
+  });
 });
 
 const getOrganization = catchAsync(async (req, res) => {
@@ -21,7 +49,20 @@ const getOrganization = catchAsync(async (req, res) => {
   if (!organization) {
     throw new ApiError(httpStatus.NOT_FOUND, 'Organization not found');
   }
-  res.send(organization);
+
+  const authUserLogin = req.authUser ? req.authUser.github.username : null;
+  const newOrganization = { ...organization._doc };
+
+  if (authUserLogin) {
+    const isMember = newOrganization.members.some((member) => member.login === authUserLogin);
+    if (!isMember) {
+      newOrganization.members = newOrganization.members.filter((member) => !member.visibility === 'public');
+    }
+  } else {
+    newOrganization.members = newOrganization.members.filter((member) => !member.visibility === 'public');
+  }
+
+  res.send(newOrganization);
 });
 
 const getOrganizationByName = catchAsync(async (req, res) => {
@@ -29,17 +70,25 @@ const getOrganizationByName = catchAsync(async (req, res) => {
   if (!organization) {
     throw new ApiError(httpStatus.NOT_FOUND, 'Organization not found');
   }
-  res.send(organization);
+
+  const authUserLogin = req.authUser ? req.authUser.github.username : null;
+  const newOrganization = { ...organization._doc };
+
+  if (authUserLogin) {
+    const isMember = newOrganization.members.some((member) => member.login === authUserLogin);
+    if (!isMember) {
+      newOrganization.members = newOrganization.members.filter((member) => !member.visibility === 'public');
+    }
+  } else {
+    newOrganization.members = newOrganization.members.filter((member) => !member.visibility === 'public');
+  }
+
+  res.send(newOrganization);
 });
 
 const getTopContributors = catchAsync(async (req, res) => {
-  const result = await organizationService.getTopContributors(req.params.organizationName);
+  const result = await organizationService.getTopContributors(req.params.organizationName, req.authUser);
   res.send(result);
-});
-
-const getBountyTotals = catchAsync(async (req, res) => {
-  const { totalRewarded, totalActive } = await organizationService.getBountyTotals(req.params.organizationName);
-  res.send({ totalRewarded, totalActive });
 });
 
 const updateProfile = catchAsync(async (req, res) => {
@@ -49,7 +98,6 @@ const updateProfile = catchAsync(async (req, res) => {
 
 module.exports = {
   getTopContributors,
-  getBountyTotals,
   updateProfile,
   getOrganizations,
   getOrganization,

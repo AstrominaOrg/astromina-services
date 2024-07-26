@@ -29,6 +29,7 @@ const exitHandler = () => {
 
 const unexpectedErrorHandler = (error) => {
   logger.error(`UNCAUGHT EXCEPTION: ${error.message}`);
+  logger.error(error.stack);
   exitHandler();
 };
 

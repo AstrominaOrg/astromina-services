@@ -1,5 +1,5 @@
 const express = require('express');
-// const { auth } = require('../../middlewares/auth');
+const { authenticate } = require('../../middlewares/auth');
 const validate = require('../../middlewares/validate');
 const issueValidation = require('../../validations/issue.validation');
 const issueController = require('../../controllers/issue.controller');
@@ -7,8 +7,8 @@ const issueController = require('../../controllers/issue.controller');
 
 const router = express.Router();
 
-router.route('/').get(validate(issueValidation.getIssues), issueController.getIssues);
+router.route('/').get(authenticate, validate(issueValidation.getIssues), issueController.getIssues);
 
-router.route('/:owner/:repo/:issueNumber').get(validate(issueValidation.getIssue), issueController.getIssue);
+router.route('/:owner/:repo/:issueNumber').get(authenticate, validate(issueValidation.getIssue), issueController.getIssue);
 
 module.exports = router;
