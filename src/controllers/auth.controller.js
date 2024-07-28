@@ -2,7 +2,7 @@ const httpStatus = require('http-status');
 const passport = require('passport');
 const config = require('../config/config');
 const catchAsync = require('../utils/catchAsync');
-const { ApiError } = require('../utils/ApiError');
+const ApiError = require('../utils/ApiError');
 const { authService, tokenService, userService, emailService, adminService, discordService } = require('../services');
 const oneTimePassword = require('../config/otp');
 const { set, get } = require('../config/redis');
@@ -12,6 +12,12 @@ const githubCallback = catchAsync(async (req, res) => {
   const tokens = await tokenService.generateAuthTokens(user);
 
   res.cookie('accessToken', tokens.access.token, {
+    httpOnly: true,
+    secure: true,
+    sameSite: 'lax',
+  });
+
+  res.cookie('refreshToken', tokens.refresh.token, {
     httpOnly: true,
     secure: true,
     sameSite: 'lax',
@@ -35,12 +41,37 @@ const discordCallback = catchAsync(async (req, res) => {
 });
 
 const logout = catchAsync(async (req, res) => {
-  await authService.logout(req.body.refreshToken);
+  const refreshToken = req.cookies.refreshToken || req.headers['refresh-token'];
+
+  if (!refreshToken) {
+    throw new ApiError(httpStatus.UNAUTHORIZED, 'Please authenticate');
+  }
+
+  await authService.logout(refreshToken);
+
+  res.clearCookie('accessToken', {
+    httpOnly: true,
+    secure: true,
+    sameSite: 'lax',
+  });
+
+  res.clearCookie('refreshToken', {
+    httpOnly: true,
+    secure: true,
+    sameSite: 'lax',
+  });
+
   res.status(httpStatus.NO_CONTENT).send();
 });
 
 const refreshTokens = catchAsync(async (req, res) => {
-  const tokens = await authService.refreshAuth(req.body.refreshToken);
+  const refreshToken = req.cookies.refreshToken || req.headers['refresh-token'];
+
+  if (!refreshToken) {
+    throw new ApiError(httpStatus.UNAUTHORIZED, 'Please authenticate');
+  }
+
+  const tokens = await authService.refreshAuth(refreshToken);
   res.send({ ...tokens });
 });
 

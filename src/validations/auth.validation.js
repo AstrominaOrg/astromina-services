@@ -16,11 +16,7 @@ const login = {
   }),
 };
 
-const logout = {
-  body: Joi.object().keys({
-    refreshToken: Joi.string().required(),
-  }),
-};
+const logout = {};
 
 const refreshTokens = {
   body: Joi.object().keys({
