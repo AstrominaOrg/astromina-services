@@ -4,7 +4,6 @@ const { getUser } = require('../user.service');
 const { wrapHandlerWithCheck } = require('./helper');
 const { saveIssue } = require('../../utils/issue.utils');
 const { isMember } = require('../organization.service');
-const { Issue } = require('../../models');
 
 async function handleIssueCreate(context) {
   const { issue, repository } = context.payload;
@@ -89,7 +88,7 @@ async function handlePriceCommand(context) {
 
   // await sendComment(context, `Price has been updated to $${price}`);
 
-  const issueDB = await Issue.findOne({ issueId });
+  const issueDB = await getIssue(issueId);
 
   const userDiscordIds = await Promise.all(
     issueDB.assignees

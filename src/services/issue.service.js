@@ -54,6 +54,14 @@ async function getIssueByOwnerAndRepoAndIssueNumber(owner, repo, issueNumber) {
   return issue.results[0];
 }
 
+async function updateRepositoryIssuesVisibility(repositoryId, isPrivate) {
+  await Issue.updateMany({ 'repository.id': repositoryId }, { private: isPrivate });
+}
+
+async function deleteRepositoryIssues(repositoryId) {
+  await Issue.deleteMany({ 'repository.id': repositoryId });
+}
+
 /**
  * Update issue by id
  * @param {ObjectId} issueId
@@ -140,6 +148,8 @@ module.exports = {
   deleteIssue,
   markIssueAsSolved,
   createOrUpdateIssue,
+  deleteRepositoryIssues,
+  updateRepositoryIssuesVisibility,
   getIssueByIssueNumberAndRepositoryId,
   getIssueByOwnerAndRepoAndIssueNumber,
 };

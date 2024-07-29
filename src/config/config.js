@@ -56,6 +56,7 @@ module.exports = {
   env: envVars.NODE_ENV,
   port: envVars.PORT,
   frontendUrl: envVars.FRONTEND_URL,
+  redirectUrl: envVars.REDIRECT_URL,
   mongoose: {
     url: `mongodb://${envVars.MONGODB_URL + (envVars.NODE_ENV === 'test' ? '-test' : '')}`,
     options: {

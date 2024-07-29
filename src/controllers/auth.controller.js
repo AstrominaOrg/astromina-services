@@ -23,7 +23,7 @@ const githubCallback = catchAsync(async (req, res) => {
     sameSite: 'lax',
   });
 
-  res.redirect(`${config.frontendUrl}`);
+  res.redirect(`${config.redirectUrl}`);
 });
 
 const discord = catchAsync(async (req, res, next) => {
@@ -37,7 +37,7 @@ const discordCallback = catchAsync(async (req, res) => {
   const { id } = JSON.parse(req.query.state);
   await userService.updateUserDiscordByUserId(id, profile);
   await discordService.recoverUsersThreads(id);
-  res.redirect(`${config.frontendUrl}`);
+  res.redirect(`${config.redirectUrl}`);
 });
 
 const logout = catchAsync(async (req, res) => {

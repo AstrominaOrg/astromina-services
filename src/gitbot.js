@@ -76,6 +76,18 @@ module.exports = (app) => {
     handleError(context, RepositoryEventService.handleStar);
   });
 
+  app.on('member.added', async (context) => {
+    handleError(context, RepositoryEventService.handleMemberAdded);
+  });
+
+  app.on('member.removed', async (context) => {
+    handleError(context, RepositoryEventService.handleMemberRemoved);
+  });
+
+  app.on(['repository.privatized', 'repository.publicized'], async (context) => {
+    handleError(context, RepositoryEventService.handleVisibilityChange);
+  });
+
   app.on('installation.created', async (context) => {
     const { repositories } = context.payload;
 
