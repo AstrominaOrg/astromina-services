@@ -18,11 +18,7 @@ const login = {
 
 const logout = {};
 
-const refreshTokens = {
-  body: Joi.object().keys({
-    refreshToken: Joi.string().required(),
-  }),
-};
+const refreshTokens = {};
 
 const sendOtp = {
   body: Joi.object().keys({

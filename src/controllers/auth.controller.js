@@ -72,7 +72,20 @@ const refreshTokens = catchAsync(async (req, res) => {
   }
 
   const tokens = await authService.refreshAuth(refreshToken);
-  res.send({ ...tokens });
+
+  res.cookie('accessToken', tokens.access.token, {
+    httpOnly: true,
+    secure: true,
+    sameSite: 'lax',
+  });
+
+  res.cookie('refreshToken', tokens.refresh.token, {
+    httpOnly: true,
+    secure: true,
+    sameSite: 'lax',
+  });
+
+  res.status(httpStatus.NO_CONTENT).send();
 });
 
 const sendOtp = catchAsync(async (req, res) => {
