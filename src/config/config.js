@@ -100,6 +100,7 @@ module.exports = {
     oauthClientId: envVars.DISCORD_OAUTH_CLIENT_ID,
     oauthClientSecret: envVars.DISCORD_OAUTH_CLIENT_SECRET,
     channelId: envVars.DISCORD_CHANNEL_ID,
+    callbackUrl: envVars.DISCORD_CALLBACK_URL,
   },
   github: {
     clientId: envVars.GITHUB_CLIENT_ID,

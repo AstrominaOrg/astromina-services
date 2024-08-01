@@ -5,6 +5,7 @@ const catchAsync = require('../utils/catchAsync');
 const ApiError = require('../utils/ApiError');
 const { authService, tokenService, userService, emailService, adminService, discordService } = require('../services');
 const oneTimePassword = require('../config/otp');
+const { randomState } = require('../utils/crypto.utils');
 const { set, get } = require('../config/redis');
 
 const githubCallback = catchAsync(async (req, res) => {
@@ -27,16 +28,26 @@ const githubCallback = catchAsync(async (req, res) => {
 });
 
 const discord = catchAsync(async (req, res, next) => {
+  const state = randomState();
+  await set(state, JSON.stringify({ id: req.authUser.id }), 300);
   passport.authenticate('discord', {
-    state: JSON.stringify({ id: req.authUser.id }),
+    state,
   })(req, res, next);
 });
 
 const discordCallback = catchAsync(async (req, res) => {
+  const { state } = req.query;
+  const stateInCache = await get(state);
+
+  if (!stateInCache) {
+    throw new ApiError(httpStatus.UNAUTHORIZED, 'Invalid state');
+  }
+
   const { profile } = req.authInfo;
-  const { id } = JSON.parse(req.query.state);
+  const { id } = JSON.parse(stateInCache);
   await userService.updateUserDiscordByUserId(id, profile);
   await discordService.recoverUsersThreads(id);
+
   res.redirect(`${config.redirectUrl}`);
 });
 
