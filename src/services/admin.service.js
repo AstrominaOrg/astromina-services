@@ -75,7 +75,7 @@ const deleteAdminById = async (adminId) => {
   if (!admin) {
     throw new ApiError(httpStatus.NOT_FOUND, 'Admin not found');
   }
-  await admin.remove();
+  await admin.deleteOne();
   return admin;
 };
 

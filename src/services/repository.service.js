@@ -67,7 +67,7 @@ const deleteRepositoryById = async (repositoryId) => {
   if (!repository) {
     throw new ApiError(httpStatus.NOT_FOUND, 'Repository not found');
   }
-  await repository.remove();
+  await repository.deleteOne();
   return repository;
 };
 

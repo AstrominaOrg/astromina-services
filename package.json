@@ -16,6 +16,7 @@
     "recover": "cross-env NODE_ENV=development nodemon src/recover.js",
     "manipulate": "cross-env NODE_ENV=development nodemon src/manipulate.js",
     "test": "jest -i --colors --verbose --detectOpenHandles",
+    "test:integration": "jest -i --colors --verbose --detectOpenHandles --testPathPattern=integration",
     "test:watch": "jest -i --watchAll",
     "coverage": "jest -i --coverage",
     "coverage:coveralls": "jest -i --coverage --coverageReporters=text-lcov | coveralls",
@@ -53,6 +54,7 @@
   ],
   "dependencies": {
     "bcryptjs": "^2.4.3",
+    "chai": "^5.1.1",
     "compression": "^1.7.4",
     "cookie-parser": "^1.4.6",
     "cors": "^2.8.5",
@@ -64,12 +66,15 @@
     "express-rate-limit": "^5.0.0",
     "express-session": "^1.18.0",
     "faker": "^5.5.3",
+    "fs": "^0.0.1-security",
     "helmet": "^4.1.0",
-    "http-status": "^1.4.0",
+    "http-status": "^1.7.4",
     "joi": "^17.3.0",
     "jsonwebtoken": "^8.5.1",
+    "mocha": "^10.7.0",
+    "mock-fs": "^5.2.0",
     "moment": "^2.24.0",
-    "mongoose": "^5.7.7",
+    "mongoose": "^8.5.2",
     "morgan": "^1.9.1",
     "nodemailer": "^6.3.1",
     "octokit": "^4.0.2",
@@ -81,12 +86,12 @@
     "pm2": "^5.1.0",
     "probot": "^13.2.2",
     "redis": "^4.6.14",
+    "smee-client": "^2.0.1",
     "swagger-jsdoc": "^6.0.8",
     "swagger-ui-express": "^4.1.6",
     "validator": "^13.0.0",
     "winston": "^3.2.1",
-    "xss-clean": "^0.1.1",
-    "smee-client": "^2.0.1"
+    "xss-clean": "^0.1.1"
   },
   "devDependencies": {
     "coveralls": "^3.0.7",
@@ -104,6 +109,6 @@
     "nodemon": "^2.0.0",
     "prettier": "^2.0.5",
     "smee-client": "^2.0.1",
-    "supertest": "^6.0.1"
+    "supertest": "^7.0.0"
   }
 }

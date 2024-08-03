@@ -70,7 +70,7 @@ const deleteOrganizationById = async (organizationId) => {
   if (!organization) {
     throw new ApiError(httpStatus.NOT_FOUND, 'Organization not found');
   }
-  await organization.remove();
+  await organization.deleteOne();
   return organization;
 };
 

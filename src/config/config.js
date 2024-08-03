@@ -59,12 +59,6 @@ module.exports = {
   redirectUrl: envVars.REDIRECT_URL,
   mongoose: {
     url: `mongodb://${envVars.MONGODB_URL + (envVars.NODE_ENV === 'test' ? '-test' : '')}`,
-    options: {
-      useCreateIndex: true,
-      useNewUrlParser: true,
-      useUnifiedTopology: true,
-      useFindAndModify: false,
-    },
   },
   otp: {
     length: envVars.OTP_LENGTH,

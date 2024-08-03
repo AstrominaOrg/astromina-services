@@ -69,7 +69,7 @@ const deletePullRequestByPullRequestId = async (pullRequestId) => {
   if (!pullRequest) {
     throw new ApiError(httpStatus.NOT_FOUND, 'Pull request not found');
   }
-  await pullRequest.remove();
+  await pullRequest.deleteOne();
   return pullRequest;
 };
 

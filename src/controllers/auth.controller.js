@@ -8,7 +8,24 @@ const oneTimePassword = require('../config/otp');
 const { randomState } = require('../utils/crypto.utils');
 const { set, get } = require('../config/redis');
 
+const github = catchAsync(async (req, res, next) => {
+  const state = randomState();
+  await set(state, { valid: true }, 300);
+
+  passport.authenticate('github', {
+    state,
+  })(req, res, next);
+});
+
 const githubCallback = catchAsync(async (req, res) => {
+  const { state } = req.query;
+
+  const stateInCache = await get(state);
+
+  if (!stateInCache) {
+    throw new ApiError(httpStatus.UNAUTHORIZED, 'Invalid state');
+  }
+
   const { user } = req;
   const tokens = await tokenService.generateAuthTokens(user);
 
@@ -24,7 +41,11 @@ const githubCallback = catchAsync(async (req, res) => {
     sameSite: 'lax',
   });
 
-  res.redirect(`${config.redirectUrl}`);
+  if (user.discord && user.discord.id) {
+    res.redirect(`${config.frontendUrl}`);
+  } else {
+    res.redirect(`${config.redirectUrl}`);
+  }
 });
 
 const discord = catchAsync(async (req, res, next) => {
@@ -123,6 +144,7 @@ const verifyOtp = catchAsync(async (req, res) => {
 });
 
 module.exports = {
+  github,
   discord,
   githubCallback,
   discordCallback,

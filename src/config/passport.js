@@ -45,6 +45,7 @@ const githubStrategy = new GitHubStrategy(
     clientID: config.github.oauthClientId,
     clientSecret: config.github.oauthClientSecret,
     callbackURL: config.github.callbackUrl,
+    scope: ['user:email'],
     customHeaders: {
       'X-Github-Next-Global-ID': '1',
     },

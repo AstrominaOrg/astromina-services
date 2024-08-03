@@ -88,7 +88,8 @@ const deleteIssue = async (issueId) => {
   if (!issue) {
     throw new ApiError(httpStatus.NOT_FOUND, 'Issue not found');
   }
-  await issue.remove();
+
+  await issue.deleteOne();
   return issue;
 };
 
