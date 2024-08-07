@@ -31,7 +31,10 @@ const getBountyTotals = {
 
 const updateProfile = {
   body: Joi.object().keys({
-    bio: Joi.string().allow(''),
+    description: Joi.string().allow(''),
+    discord: Joi.object().keys({
+      url: Joi.string().allow(''),
+    }),
     twitter: Joi.object().keys({
       url: Joi.string().allow(''),
     }),
@@ -44,9 +47,6 @@ const updateProfile = {
     linkedin: Joi.object().keys({
       url: Joi.string().allow(''),
     }),
-    availableDays: Joi.number(),
-    location: Joi.string(),
-    skills: Joi.array().items(Joi.string()),
   }),
 };
 

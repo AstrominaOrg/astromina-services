@@ -51,18 +51,18 @@ const getContributedProjects = {
 
 const updateProfile = {
   body: Joi.object().keys({
-    bio: Joi.string(),
+    bio: Joi.string().allow(''),
     twitter: Joi.object().keys({
-      url: Joi.string(),
+      url: Joi.string().allow(''),
     }),
     website: Joi.object().keys({
-      url: Joi.string(),
+      url: Joi.string().allow(''),
     }),
     telegram: Joi.object().keys({
-      url: Joi.string(),
+      url: Joi.string().allow(''),
     }),
     linkedin: Joi.object().keys({
-      url: Joi.string(),
+      url: Joi.string().allow(''),
     }),
     availableDays: Joi.number(),
     location: Joi.string(),
