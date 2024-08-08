@@ -2,8 +2,9 @@ const httpStatus = require('http-status');
 const pick = require('../utils/pick');
 const ApiError = require('../utils/ApiError');
 const catchAsync = require('../utils/catchAsync');
-const { organizationService } = require('../services');
+const { organizationService, githubService } = require('../services');
 const logger = require('../config/logger');
+const config = require('../config/config');
 
 const getOrganizations = catchAsync(async (req, res) => {
   const filter = pick(req.query, ['name', 'state']);
@@ -96,7 +97,14 @@ const updateProfile = catchAsync(async (req, res) => {
   res.send(organization);
 });
 
+const redirect = catchAsync(async (req, res) => {
+  const organization = await githubService.getInstallation(req.query.installation_id);
+
+  res.redirect(`${config.frontendUrl}/organization/${organization.login}`);
+});
+
 module.exports = {
+  redirect,
   getTopContributors,
   updateProfile,
   getOrganizations,

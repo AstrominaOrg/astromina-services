@@ -50,7 +50,14 @@ const updateProfile = {
   }),
 };
 
+const redirect = {
+  query: Joi.object().keys({
+    installation_id: Joi.string().required(),
+  }),
+};
+
 module.exports = {
+  redirect,
   updateProfile,
   getBountyTotals,
   getOrganization,

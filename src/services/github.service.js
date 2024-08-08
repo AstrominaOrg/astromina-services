@@ -733,10 +733,41 @@ const getRepository = async (owner, name) => {
     throw error;
   }
 };
+const getInstallation = async (installation_id) => {
+  const { App } = await import('octokit');
+
+  const app = new App({
+    appId: config.github.appId,
+    privateKey: config.github.privateKey,
+  });
+
+  const octokit = await app.getInstallationOctokit(installation_id);
+
+  try {
+    const { data: installationDetails } = await octokit.rest.apps.getInstallation({
+      installation_id,
+    });
+
+    if (installationDetails.account.type === 'Organization') {
+      const { data: organizationDetails } = await octokit.rest.orgs.get({
+        org: installationDetails.account.login,
+      });
+
+      return organizationDetails;
+    } else {
+      return installationDetails;
+    }
+  } catch (error) {
+    logger.error('Error fetching installation:', error);
+    throw error;
+  }
+};
+
 
 module.exports = {
   getLinkedIssues,
   getRepository,
+  getInstallation,
   overrideManager,
   overrideAssignee,
   overrideThread,

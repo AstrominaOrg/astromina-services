@@ -11,6 +11,8 @@ router
   .route('/')
   .get(authenticate, validate(organizationValidation.getOrganizations), cache, organizationController.getOrganizations);
 
+router.route('/redirect').get(organizationController.redirect);
+
 router
   .route('/:organizationName')
   .get(authenticate, validate(organizationValidation.getOrganization), organizationController.getOrganizationByName);
@@ -28,4 +30,5 @@ router
     validate(organizationValidation.updateProfile),
     organizationController.updateProfile
   );
+
 module.exports = router;

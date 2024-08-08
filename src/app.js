@@ -18,6 +18,7 @@ const { authLimiter } = require('./middlewares/rateLimiter');
 const { errorConverter, errorHandler } = require('./middlewares/error');
 const ApiError = require('./utils/ApiError');
 const gitbot = require('./gitbot');
+const { getInstallation } = require('./services/github.service');
 
 if (config.env === 'development') {
   const smee = new SmeeClient({
