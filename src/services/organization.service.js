@@ -74,6 +74,15 @@ const deleteOrganizationById = async (organizationId) => {
   return organization;
 };
 
+const deleteOrganizationByName = async (organizationName) => {
+  const organization = await getOrganizationByName(organizationName);
+  if (!organization) {
+    throw new ApiError(httpStatus.NOT_FOUND, 'Organization not found');
+  }
+  await organization.deleteOne();
+  return organization;
+};
+
 /**
  * Update organization members
  * @param {ObjectId} organizationId
@@ -185,6 +194,7 @@ module.exports = {
   getOrganizationByName,
   updateOrganizationById,
   deleteOrganizationById,
+  deleteOrganizationByName,
   updateOrganizationMembers,
   createOrUpdateOrganization,
 };
