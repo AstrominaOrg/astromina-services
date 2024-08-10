@@ -178,7 +178,7 @@ const getOrCreateThread = async ({ issue, price, assignees }) => {
   } else {
     thread = await createPrivateThread({
       channelId: config.discord.channelId,
-      threadName: `Issue #${issue.number}`,
+      threadName: `Issue #${issue.number} - ${issue.owner.login}/${issue.repository.name}`,
       initialMessage: `The issue #${issue.number} now marked as bounty with $${price} bounty. Assignees will be added to this thread when they are assigned to the issue.`,
       ids: assignees,
       reason: 'Issue marked as bounty',

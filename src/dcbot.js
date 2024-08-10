@@ -1,8 +1,4 @@
 const { Client, GatewayIntentBits, Partials } = require('discord.js');
-// eslint-disable-next-line import/no-unresolved
-const { REST } = require('@discordjs/rest');
-// eslint-disable-next-line import/no-extraneous-dependencies
-const { Routes } = require('discord-api-types/v9');
 const config = require('./config/config');
 const logger = require('./config/logger');
 const { markUserAsRewarded } = require('./services/user.service');
@@ -20,48 +16,6 @@ const dcbot = new Client({
 
 dcbot.once('ready', async () => {
   logger.info(`Logged in as ${dcbot.user.tag}`);
-
-  const commands = [
-    {
-      name: 'create-thread',
-      description: 'Creates a private thread with mentioned users',
-      options: [
-        {
-          name: 'message',
-          type: 3,
-          description: 'The message to send in the thread',
-          required: true,
-        },
-      ],
-    },
-    {
-      name: 'request',
-      description: 'Presents a yes/no choice',
-      options: [
-        {
-          name: 'message',
-          type: 3,
-          description: 'The message to send with the confirmation buttons',
-          required: true,
-        },
-        {
-          name: 'username',
-          type: 6,
-          description: 'The user to send the confirmation message to',
-          required: true,
-        },
-      ],
-    },
-  ];
-
-  const rest = new REST({ version: '9' }).setToken(config.discord.token);
-
-  try {
-    await rest.put(Routes.applicationCommands(dcbot.user.id), { body: commands });
-    logger.info('Successfully registered application commands.');
-  } catch (error) {
-    logger.error('Error registering application commands:', error);
-  }
 });
 
 dcbot.on('interactionCreate', async (interaction) => {
