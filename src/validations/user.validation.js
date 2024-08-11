@@ -65,7 +65,7 @@ const updateProfile = {
       url: Joi.string().allow(''),
     }),
     availableDays: Joi.number(),
-    location: Joi.string(),
+    location: Joi.string().allow(''),
     skills: Joi.array().items(Joi.string()),
   }),
 };
