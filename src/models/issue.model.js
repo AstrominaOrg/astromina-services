@@ -1,6 +1,7 @@
 const mongoose = require('mongoose');
 const { toJSON, paginate } = require('./plugins');
 const { updateRepositoryStats, updateOrganizationStats, updateAssigneeStats } = require('../utils/mongo');
+const { name } = require('faker/lib/locales/az');
 
 const issueSchema = new mongoose.Schema(
   {
@@ -62,6 +63,9 @@ const issueSchema = new mongoose.Schema(
       avatar_url: {
         type: String,
         required: true,
+      },
+      name: {
+        type: String,
       },
     },
     managers: {
@@ -142,12 +146,15 @@ issueSchema.index({ issueId: 1 }, { unique: true });
 issueSchema.pre('save', async function (next) {
   try {
     const Repository = mongoose.model('Repository');
+    const Organization = mongoose.model('Organization');
     const repo = await Repository.findOne({ repositoryId: this.repository.id });
+    const org = await Organization.findOne({ title: this.owner.login });
     if (repo) {
       this.collaborators = repo.collaborators;
       this.private = repo.private;
-    } else {
-      return next(new Error('Repository not found'));
+    }
+    if (org) {
+      this.owner.name = org.name;
     }
   } catch (err) {
     return next(err);
