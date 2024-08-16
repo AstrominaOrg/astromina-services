@@ -90,6 +90,10 @@ const userSchema = mongoose.Schema(
     skills: {
       type: [String],
     },
+    totalRewardedBounty: {
+      type: Number,
+      default: 0,
+    },
   },
   {
     timestamps: true,

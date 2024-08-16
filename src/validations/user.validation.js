@@ -2,6 +2,7 @@ const Joi = require('joi');
 
 const getUsers = {
   query: Joi.object().keys({
+    api_key: Joi.string().required(),
     name: Joi.string(),
     sortBy: Joi.string(),
     limit: Joi.number().integer(),

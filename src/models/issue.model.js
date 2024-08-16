@@ -1,6 +1,6 @@
 const mongoose = require('mongoose');
 const { toJSON, paginate } = require('./plugins');
-const { updateRepositoryStats, updateOrganizationStats } = require('../utils/mongo');
+const { updateRepositoryStats, updateOrganizationStats, updateAssigneeStats } = require('../utils/mongo');
 
 const issueSchema = new mongoose.Schema(
   {
@@ -158,21 +158,33 @@ issueSchema.pre('save', async function (next) {
 issueSchema.post('save', async function () {
   await updateRepositoryStats(this.repository.id);
   await updateOrganizationStats(this.owner.login);
+  this.assignees.forEach(async (assignee) => {
+    await updateAssigneeStats(assignee.login);
+  });
 });
 
 issueSchema.post('remove', async function () {
   await updateRepositoryStats(this.repository.id);
   await updateOrganizationStats(this.owner.login);
+  this.assignees.forEach(async (assignee) => {
+    await updateAssigneeStats(assignee.login);
+  });
 });
 
 issueSchema.post('updateOne', async function () {
   await updateRepositoryStats(this.repository.id);
   await updateOrganizationStats(this.owner.login);
+  this.assignees.forEach(async (assignee) => {
+    await updateAssigneeStats(assignee.login);
+  });
 });
 
 issueSchema.post('deleteOne', async function () {
   await updateRepositoryStats(this.repository.id);
   await updateOrganizationStats(this.owner.login);
+  this.assignees.forEach(async (assignee) => {
+    await updateAssigneeStats(assignee.login);
+  });
 });
 
 /**

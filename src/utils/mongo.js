@@ -1,5 +1,6 @@
 const mongoose = require('mongoose');
 const Repository = require('../models/repository.model');
+const User = require('../models/user.model');
 
 const updateRepositoryStats = async (repositoryId) => {
   const Issue = mongoose.model('Issue');
@@ -70,7 +71,34 @@ const updateOrganizationStats = async (organizationLogin) => {
   );
 };
 
+const updateAssigneeStats = async (assigneeLogin) => {
+  // TODO: you can do better
+  const Issue = mongoose.model('Issue');
+
+  const result = await Issue.aggregate([
+    { $match: { 'assignees.login': assigneeLogin } },
+    {
+      $facet: {
+        totalRewardedBounty: [
+          { $match: { solved: true, price: { $gt: 0 } } },
+          { $group: { _id: null, totalPrice: { $sum: '$price' } } },
+        ],
+      },
+    },
+  ]);
+
+  const totalRewardedBounty = result[0].totalRewardedBounty[0] ? result[0].totalRewardedBounty[0].totalPrice : 0;
+
+  await User.findOneAndUpdate(
+    { 'github.username': assigneeLogin },
+    {
+      totalRewardedBounty,
+    }
+  );
+};
+
 module.exports = {
   updateRepositoryStats,
   updateOrganizationStats,
+  updateAssigneeStats,
 };

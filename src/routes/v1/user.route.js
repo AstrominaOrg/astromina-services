@@ -1,5 +1,5 @@
 const express = require('express');
-const { authenticate, authorize } = require('../../middlewares/auth');
+const { authenticate, authorize, authenticateApiKey } = require('../../middlewares/auth');
 const validate = require('../../middlewares/validate');
 const userValidation = require('../../validations/user.validation');
 const userController = require('../../controllers/user.controller');
@@ -7,7 +7,7 @@ const { cache } = require('../../middlewares/redis');
 
 const router = express.Router();
 
-router.route('/').get(validate(userValidation.getUsers), userController.getUsers);
+router.route('/').get(authenticateApiKey, validate(userValidation.getUsers), userController.getUsers);
 
 // Auth routes
 router.route('/me').get(authenticate, authorize('getProfile'), userController.getMe);

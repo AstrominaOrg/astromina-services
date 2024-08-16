@@ -3,6 +3,7 @@ const httpStatus = require('http-status');
 const ApiError = require('../utils/ApiError');
 const { roleRights } = require('../config/roles');
 const { organizationService } = require('../services');
+const config = require('../config/config');
 
 const verifyCallback = (req, resolve) => async (err, user) => {
   if (user) {
@@ -18,6 +19,19 @@ const authenticate = async (req, res, next) => {
   })
     .then(() => next())
     .catch((err) => next(err));
+};
+
+const authenticateApiKey = async (req, res, next) => {
+  try {
+    const apiKeyFromRequest = req.query.api_key;
+
+    if (apiKeyFromRequest === config.apiKey) {
+      return next();
+    }
+    return res.status(401).json({ error: 'Invalid API Key' });
+  } catch (err) {
+    return next(err);
+  }
 };
 
 const authorize =
@@ -54,5 +68,6 @@ const organizationMember = async (req, res, next) => {
 module.exports = {
   authenticate,
   authorize,
+  authenticateApiKey,
   organizationMember,
 };
