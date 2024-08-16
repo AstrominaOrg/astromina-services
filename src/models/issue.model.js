@@ -1,7 +1,6 @@
 const mongoose = require('mongoose');
 const { toJSON, paginate } = require('./plugins');
 const { updateRepositoryStats, updateOrganizationStats, updateAssigneeStats } = require('../utils/mongo');
-const { name } = require('faker/lib/locales/az');
 
 const issueSchema = new mongoose.Schema(
   {
