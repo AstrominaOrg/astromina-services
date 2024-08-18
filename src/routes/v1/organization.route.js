@@ -11,7 +11,7 @@ router
   .route('/')
   .get(authenticate, validate(organizationValidation.getOrganizations), cache, organizationController.getOrganizations);
 
-router.route('/redirect').get(validate(organizationValidation.redirect), organizationController.redirect);
+router.route('/redirect').get(organizationController.redirect);
 
 router
   .route('/:organizationName')
