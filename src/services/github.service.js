@@ -167,6 +167,32 @@ query ($org: String!, $repo: String!, $pullRequestsFirst: Int!, $pullRequestsAft
   }
 }`;
 
+const organizationRepositoriesQueryWithoutCollab = `
+query ($org: String!, $reposFirst: Int!, $reposAfter: String) {
+  organization(login: $org) {
+    repositories(first: $reposFirst, after: $reposAfter) {
+      nodes {
+        id
+        url
+        name
+        description
+        stargazerCount
+        forkCount
+        nameWithOwner
+        visibility
+        owner {
+          login
+          avatarUrl
+        }
+      }
+      pageInfo {
+        endCursor
+        hasNextPage
+      }
+    }
+  }
+}`;
+
 const organizationRepositoriesQuery = `
 query ($org: String!, $reposFirst: Int!, $reposAfter: String) {
   organization(login: $org) {
@@ -327,7 +353,6 @@ const getLinkedIssues = async (repository, owner, prNumber, maxIssues) => {
     return issueData;
   } catch (error) {
     logger.error('Error fetching linked issues:', error);
-    throw error;
   }
 };
 
@@ -355,7 +380,6 @@ const getRepositoryPullRequests = async (org, repo) => {
     }
   } catch (error) {
     logger.error(`Error fetching PR details org: ${org}, repo: ${repo.name}:`, error);
-    throw error;
   }
 
   allPullRequests.forEach(async (pr) => {
@@ -417,7 +441,6 @@ const getRepositoryIssues = async (org, repo) => {
     }
   } catch (error) {
     logger.error('Error fetching issues and comments:', error);
-    throw error;
   }
 
   await Promise.all(
@@ -501,7 +524,6 @@ const getOrganizationMembers = async (org) => {
     return roles;
   } catch (error) {
     logger.error('Error fetching organization members:', error);
-    throw error;
   }
 };
 
@@ -525,8 +547,22 @@ const getOrganizationRepos = async (org) => {
     reposAfter = repos.pageInfo.endCursor;
     hasNextPage = repos.pageInfo.hasNextPage;
   } catch (error) {
-    logger.error('Error fetching organization repos:', error);
-    throw error;
+    try {
+      const reposData = await octokitInstance.graphql(organizationRepositoriesQueryWithoutCollab, {
+        org,
+        reposFirst: 100,
+        reposAfter,
+      });
+  
+      const repos = reposData.organization.repositories;
+      allRepos = allRepos.concat(repos.nodes);
+  
+      reposAfter = repos.pageInfo.endCursor;
+      hasNextPage = repos.pageInfo.hasNextPage;
+    }
+    catch (error) {
+      logger.error('Error fetching organization repos:', error);
+    }
   }
 
   return allRepos;
@@ -586,7 +622,7 @@ const recoverOrganization = async (name) => {
         login: repo.owner.login,
         avatar_url: repo.owner.avatarUrl,
       },
-      collaborators: repo.collaborators.nodes.map((collaborator) => ({
+      collaborators: repo.collaborators?.nodes.map((collaborator) => ({
         login: collaborator.login,
         avatar_url: collaborator.avatarUrl,
       })),
@@ -618,7 +654,6 @@ const getOrganization = async (org) => {
     return issuesData;
   } catch (error) {
     logger.error('Error fetching organization:', error);
-    throw error;
   }
 };
 
@@ -650,7 +685,6 @@ const getUserContributions = async (userName) => {
     return contributionsData.user.contributionsCollection;
   } catch (error) {
     logger.error('Error fetching user contributions:', error);
-    throw error;
   }
 };
 
@@ -732,7 +766,6 @@ const getRepository = async (owner, name) => {
     return repository;
   } catch (error) {
     logger.error('Error fetching repository:', error);
-    throw error;
   }
 };
 const getInstallation = async (installation_id) => {
@@ -761,7 +794,6 @@ const getInstallation = async (installation_id) => {
     }
   } catch (error) {
     logger.error('Error fetching installation:', error);
-    throw error;
   }
 };
 
