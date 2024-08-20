@@ -139,6 +139,10 @@ async function addManager(issueId, manager) {
   await issue.save();
 }
 
+async function deleteIssuesByRepoName(orgName, repoName) {
+  await Issue.deleteMany({ 'repository.name': repoName, 'owner.login': orgName });
+}
+
 module.exports = {
   getIssue,
   addManager,
@@ -150,6 +154,7 @@ module.exports = {
   markIssueAsSolved,
   createOrUpdateIssue,
   deleteRepositoryIssues,
+  deleteIssuesByRepoName,
   updateRepositoryIssuesVisibility,
   getIssueByIssueNumberAndRepositoryId,
   getIssueByOwnerAndRepoAndIssueNumber,

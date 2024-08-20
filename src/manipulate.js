@@ -3,6 +3,8 @@ const config = require('./config/config');
 const { overrideAssignee, overrideManager, overrideThread } = require('./services/github.service');
 const logger = require('./config/logger');
 const { deleteOrganizationByName } = require('./services/organization.service');
+const { deleteRepositoryByName } = require('./services/repository.service');
+const { deleteIssuesByRepoName } = require('./services/issue.service');
 
 mongoose.connect(config.mongoose.url, config.mongoose.options).then(() => {
   if (process.argv[2] === '--override-assignee') {
@@ -19,6 +21,11 @@ mongoose.connect(config.mongoose.url, config.mongoose.options).then(() => {
   } else if (process.argv[2] === '--delete-org') {
     const organizationName = process.argv[3];
     deleteOrganizationByName(organizationName);
+  } else if (process.argv[2] === '--delete-repo') {
+    const organizationName = process.argv[3];
+    const repoName = process.argv[4];
+    deleteRepositoryByName(organizationName, repoName);
+    deleteIssuesByRepoName(organizationName, repoName);
   } else {
     logger.error('Invalid argument. Use --override-assignee or --override-manager or --override-thread');
   }

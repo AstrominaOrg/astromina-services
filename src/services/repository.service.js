@@ -87,13 +87,23 @@ const getRepositoryByOwnerAndName = async (owner, name) => {
   return Repository.findOne({ 'owner.login': owner, name });
 };
 
+const deleteRepositoriesByOwner = async (owner) => {
+  return Repository.deleteMany({ 'owner.login': owner });
+};
+
+const deleteRepositoryByName = async (owner, name) => {
+  return Repository.deleteOne({ 'owner.login': owner, name });
+};
+
 module.exports = {
   createRepository,
   queryRepositories,
   getRepositoryById,
-  getRepositoryByOwnerAndName,
+  deleteRepositoryById,
   getRepositoryByRepoId,
+  deleteRepositoryByName,
   createOrUpdateRepository,
   updateRepositoryByRepoId,
-  deleteRepositoryById,
+  deleteRepositoriesByOwner,
+  getRepositoryByOwnerAndName,
 };

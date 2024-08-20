@@ -7,7 +7,7 @@ const {
   queryIssues,
   updateIssue,
 } = require('./issue.service');
-const { createOrUpdateRepository } = require('./repository.service');
+const { createOrUpdateRepository, deleteRepositoriesByOwner } = require('./repository.service');
 const { createOrUpdateOrganization } = require('./organization.service');
 const { saveIssue } = require('../utils/issue.utils');
 const { savePullRequest } = require('../utils/pr.utils');
@@ -569,6 +569,8 @@ const recoverOrganization = async (name) => {
       url: repo.url,
     })),
   });
+  
+  await deleteRepositoriesByOwner(name);
 
   for (let i = 0; i < repos.length; i++) {
     const repo = repos[i];
@@ -762,7 +764,6 @@ const getInstallation = async (installation_id) => {
     throw error;
   }
 };
-
 
 module.exports = {
   getLinkedIssues,
