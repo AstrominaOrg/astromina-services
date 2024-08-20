@@ -31,8 +31,12 @@ const getContributedProjects = catchAsync(async (req, res) => {
 
 const getUserGithubActivity = catchAsync(async (req, res) => {
   const result = await githubService.getUserContributions(req.params.username);
-  set(req.originalUrl, result, 24 * 60 * 60);
-  res.send(result);
+  if (result) {
+    set(req.originalUrl, result, 24 * 60 * 60);
+    res.send(result);
+  }
+
+  throw new ApiError(httpStatus.NOT_FOUND, 'User not found');
 });
 
 const getUserActivity = catchAsync(async (req, res) => {
