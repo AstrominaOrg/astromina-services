@@ -4,6 +4,7 @@ const {
   PullRequestEventService,
   RepositoryEventService,
 } = require('./services/events');
+const { recoverOrganization } = require('./services/github.service');
 /**
  * This is the main entrypoint to your Probot app
  * @param {import('probot').Probot} app
@@ -95,6 +96,12 @@ module.exports = (app) => {
       context.payload.repository = repository;
       handleError(context, RepositoryEventService.handleRepositoryAdd);
     });
+
+    try {
+      recoverOrganization(context.payload.installation.account.login);
+    } catch (error) {
+      app.log.error(`Error recovering organization: ${error.message} - ${error.stack}`);
+    }
   });
 
   app.on('installation_repositories.added', async (context) => {
@@ -104,6 +111,12 @@ module.exports = (app) => {
       context.payload.repository = repository;
       handleError(context, RepositoryEventService.handleRepositoryAdd);
     });
+
+    try {
+      recoverOrganization(context.payload.installation.account.login);
+    } catch (error) {
+      app.log.error(`Error recovering organization: ${error.message} - ${error.stack}`);
+    }
   });
 
   app.on('installation_repositories.removed', async (context) => {
@@ -113,6 +126,11 @@ module.exports = (app) => {
       context.payload.repository = repository;
       handleError(context, RepositoryEventService.handleRepositoryRemove);
     });
+    try {
+      recoverOrganization(context.payload.installation.account.login);
+    } catch (error) {
+      app.log.error(`Error recovering organization: ${error.message} - ${error.stack}`);
+    }
   });
 
   /*
