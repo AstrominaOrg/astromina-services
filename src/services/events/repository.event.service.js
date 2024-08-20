@@ -24,7 +24,7 @@ async function handleRepositoryAdd(context) {
     })),
     type: installation.account.type,
     private: githubRepo.isPrivate,
-    state: 'pending',
+    state: 'accepted',
   });
 }
 

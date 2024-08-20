@@ -590,7 +590,7 @@ const recoverOrganization = async (name) => {
       })),
       type: 'Organization',
       private: repo.visibility === 'PRIVATE',
-      state: 'pending',
+      state: 'accepted',
     });
 
     await getRepositoryIssues(name, repo);
