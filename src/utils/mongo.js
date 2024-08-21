@@ -46,11 +46,11 @@ const updateOrganizationStats = async (organizationLogin) => {
       $facet: {
         totalIssues: [{ $count: 'count' }],
         totalRewardedBounty: [
-          { $match: { solved: true, price: { $gt: 0 } } },
+          { $match: { rewarded: true, price: { $gt: 0 } } },
           { $group: { _id: null, totalPrice: { $sum: '$price' } } },
         ],
         totalAvailableBounty: [
-          { $match: { solved: false, price: { $gt: 0 } } },
+          { $match: { solved: false, assignees: { $size: 0 }, state: 'open', price: { $gt: 0 } } },
           { $group: { _id: null, totalPrice: { $sum: '$price' } } },
         ],
       },
