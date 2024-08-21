@@ -29,11 +29,11 @@ async function recoverThreads() {
                 name: thread.name,
               },
             });
-          }
 
-          logger.info(
-            `Recovered and updated issue #${issue.number} for ${ownerLogin}/${repoName} with thread ID: ${thread.id}`
-          );
+            logger.info(
+              `Recovered and updated issue #${issue.number} for ${ownerLogin}/${repoName} with thread ID: ${thread.id}`
+            );
+          }
         } else {
           logger.warn(`Thread name does not match expected pattern: ${thread.name}`);
         }
