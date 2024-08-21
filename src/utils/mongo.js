@@ -9,13 +9,16 @@ const updateRepositoryStats = async (repositoryId) => {
     { $match: { 'repository.id': repositoryId } },
     {
       $facet: {
-        totalIssues: [{ $count: 'count' }],
+        totalIssues: [
+          { $match: { solved: false, assignees: { $size: 0 }, state: 'open', price: { $gt: 0 } } },
+          { $count: 'count' },
+        ],
         totalRewardedBounty: [
-          { $match: { solved: true, price: { $gt: 0 } } },
+          { $match: { rewarded: true, price: { $gt: 0 } } },
           { $group: { _id: null, totalPrice: { $sum: '$price' } } },
         ],
         totalAvailableBounty: [
-          { $match: { solved: false, price: { $gt: 0 } } },
+          { $match: { solved: false, assignees: { $size: 0 }, state: 'open', price: { $gt: 0 } } },
           { $group: { _id: null, totalPrice: { $sum: '$price' } } },
         ],
       },
@@ -44,7 +47,10 @@ const updateOrganizationStats = async (organizationLogin) => {
     { $match: { 'owner.login': organizationLogin } },
     {
       $facet: {
-        totalIssues: [{ $count: 'count' }],
+        totalIssues: [
+          { $match: { solved: false, assignees: { $size: 0 }, state: 'open', price: { $gt: 0 } } },
+          { $count: 'count' },
+        ],
         totalRewardedBounty: [
           { $match: { rewarded: true, price: { $gt: 0 } } },
           { $group: { _id: null, totalPrice: { $sum: '$price' } } },
