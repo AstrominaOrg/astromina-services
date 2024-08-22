@@ -107,6 +107,7 @@ const updateProfile = catchAsync(async (req, res) => {
 
 const isDiscordMember = catchAsync(async (req, res) => {
   const user = await userService.getUser(req.params.username);
+
   if (!user) {
     throw new ApiError(httpStatus.NOT_FOUND, 'User not found');
   }
@@ -116,7 +117,7 @@ const isDiscordMember = catchAsync(async (req, res) => {
   }
 
   try {
-    const result = await discordService.isMember('1192134370463592529');
+    const result = await discordService.isMember(user.discord.id);
     res.send(result);
   } catch (error) {
     throw new ApiError(httpStatus.NOT_FOUND, 'User is not a member of the Discord server');
