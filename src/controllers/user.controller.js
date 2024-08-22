@@ -115,8 +115,12 @@ const isDiscordMember = catchAsync(async (req, res) => {
     throw new ApiError(httpStatus.NOT_FOUND, 'User has not linked Discord');
   }
 
-  const result = await discordService.isMember(user.discord.id);
-  res.send(result);
+  try {
+    const result = await discordService.isMember('1192134370463592529');
+    res.send(result);
+  } catch (error) {
+    throw new ApiError(httpStatus.NOT_FOUND, 'User is not a member of the Discord server');
+  }
 });
 
 module.exports = {
