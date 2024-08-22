@@ -275,7 +275,7 @@ const getManagedIssues = async (username, filter, options) => {
     throw new ApiError(httpStatus.NOT_FOUND, 'User not found');
   }
 
-  const managedIssues = Issue.paginate({ 'managers.login': username, ...filter }, options);
+  const managedIssues = Issue.paginate({ 'managers.login': username, price: { $gt: 0 }, ...filter }, options);
 
   return managedIssues;
 };
