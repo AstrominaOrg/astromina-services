@@ -39,5 +39,6 @@ router.route('/:username/activity').get(authenticate, validate(userValidation.ge
 router
   .route('/:username/contributed-projects')
   .get(authenticate, validate(userValidation.getContributedProjects), userController.getContributedProjects);
+router.route('/:username/is-discord-member').get(validate(userValidation.getUser), userController.isDiscordMember);
 
 module.exports = router;

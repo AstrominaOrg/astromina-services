@@ -2,7 +2,7 @@ const httpStatus = require('http-status');
 const pick = require('../utils/pick');
 const ApiError = require('../utils/ApiError');
 const catchAsync = require('../utils/catchAsync');
-const { userService, githubService, organizationService, issueService } = require('../services');
+const { userService, githubService, organizationService, issueService, discordService } = require('../services');
 const { set } = require('../config/redis');
 
 const getUsers = catchAsync(async (req, res) => {
@@ -105,11 +105,26 @@ const updateProfile = catchAsync(async (req, res) => {
   res.send(user);
 });
 
+const isDiscordMember = catchAsync(async (req, res) => {
+  const user = await userService.getUser(req.params.username);
+  if (!user) {
+    throw new ApiError(httpStatus.NOT_FOUND, 'User not found');
+  }
+
+  if (!user.discord || !user.discord.id) {
+    throw new ApiError(httpStatus.NOT_FOUND, 'User has not linked Discord');
+  }
+
+  const result = await discordService.isMember(user.discord.id);
+  res.send(result);
+});
+
 module.exports = {
   getContributedProjects,
   getUserGithubActivity,
   getMyAssignedIssues,
   getMyManagedIssues,
+  isDiscordMember,
   getUserActivity,
   updateProfile,
   getMyProjects,

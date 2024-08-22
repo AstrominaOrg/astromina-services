@@ -188,7 +188,20 @@ const getOrCreateThread = async ({ issue, price, assignees }) => {
   return thread;
 };
 
+const isMember = async (userId) => {
+  const guild = await dcbot.guilds.fetch(config.discord.guildId);
+
+  if (!guild) {
+    throw new Error('Invalid guild ID or the guild is not available.');
+  }
+
+  const member = await guild.members.fetch(userId);
+
+  return member;
+};
+
 module.exports = {
+  isMember,
   addThreadMember,
   removeThreadMember,
   createPrivateThread,
