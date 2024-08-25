@@ -173,7 +173,7 @@ const getOrCreateThread = async ({ issue, price, assignees }) => {
     thread = issue.thread;
     await sendThreadMessage({
       threadId: thread.id,
-      message: `Price has been updated to $${price}`,
+      message: `Price has been updated to ${price} MINA`,
     });
   } else {
     thread = await createPrivateThread({

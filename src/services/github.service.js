@@ -715,6 +715,15 @@ const overrideAssignee = async (username) => {
   }
 };
 
+const sendCommend = async (context, message) => {
+  await context.octokit.issues.createComment({
+    owner: context.payload.repository.owner.login,
+    repo: context.payload.repository.name,
+    issue_number: context.payload.issue.number,
+    body: message,
+  });
+}
+
 const overrideManager = async (username) => {
   await initializeOctokit();
 
@@ -800,6 +809,7 @@ const getInstallation = async (installation_id) => {
 module.exports = {
   getLinkedIssues,
   getRepository,
+  sendCommend,
   getInstallation,
   overrideManager,
   overrideAssignee,

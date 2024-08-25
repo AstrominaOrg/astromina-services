@@ -4,6 +4,7 @@ const { getUser } = require('../user.service');
 const { wrapHandlerWithCheck } = require('./helper');
 const { saveIssue } = require('../../utils/issue.utils');
 const { isMember } = require('../organization.service');
+const { sendCommend } = require('../github.service');
 
 async function handleIssueCreate(context) {
   const { issue, repository } = context.payload;
@@ -86,7 +87,20 @@ async function handlePriceCommand(context) {
 
   await addManager(issueId, sender);
 
-  // await sendComment(context, `Price has been updated to $${price}`);
+  const text = `
+## 💰 ${price} MINA BOUNTY!
+
+This bounty is listed on [AstroMina.Org](https://app.astromina.org/)! You can list your own bounties or view all open bounties here.
+
+### **If you want to be assigned to this bounty!**
+
+- 🛬 Sign up on [AstroMina.Org](http://astromina.org/) with your GitHub account in just seconds.
+- ✋ **Comment** on this issue if you want to be **assigned** to it.
+- 🤝 Once assigned, a private Discord thread will be created between you and the bounty owner for communication. You can discuss details there.
+- ⚠️ [Be sure to join the AstroMina Discord server here.](https://discord.com/invite/pNafn2Vk3N)
+`;
+
+  await sendCommend(context, text);
 
   const issueDB = await getIssue(issueId);
 
