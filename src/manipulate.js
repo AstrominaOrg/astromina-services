@@ -4,7 +4,7 @@ const { overrideAssignee, overrideManager, overrideThread } = require('./service
 const logger = require('./config/logger');
 const { deleteOrganizationByName } = require('./services/organization.service');
 const { deleteRepositoryByName } = require('./services/repository.service');
-const { deleteIssuesByRepoName } = require('./services/issue.service');
+const { deleteIssuesByRepoName, updateIssue, getIssueByOwnerAndRepoAndIssueNumber } = require('./services/issue.service');
 
 mongoose.connect(config.mongoose.url, config.mongoose.options).then(() => {
   if (process.argv[2] === '--override-assignee') {
@@ -26,6 +26,14 @@ mongoose.connect(config.mongoose.url, config.mongoose.options).then(() => {
     const repoName = process.argv[4];
     deleteRepositoryByName(organizationName, repoName);
     deleteIssuesByRepoName(organizationName, repoName);
+  } else if (process.argv[2] === '--set-issue-rewarded') {
+    const organizationName = process.argv[3];
+    const repoName = process.argv[4];
+    const issueNumber = process.argv[5];
+    const rewarded = process.argv[6] === 'true';
+    getIssueByOwnerAndRepoAndIssueNumber(organizationName, repoName, issueNumber).then((issue) => {
+      updateIssue(issue.issueId, { rewarded });
+    });
   } else {
     logger.error('Invalid argument. Use --override-assignee or --override-manager or --override-thread');
   }
