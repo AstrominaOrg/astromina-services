@@ -134,7 +134,11 @@ async function addManager(issueId, manager) {
     throw new ApiError(httpStatus.NOT_FOUND, 'Issue not found');
   }
 
-  issue.managers.push(manager);
+  const isDuplicate = issue.managers.some((existingManager) => existingManager.login === manager.login);
+
+  if (!isDuplicate) {
+    issue.managers.push(manager);
+  }
 
   await issue.save();
 }

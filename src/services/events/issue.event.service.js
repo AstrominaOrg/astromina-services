@@ -128,7 +128,7 @@ This bounty is listed on [AstroMina.Org](https://app.astromina.org/)! You can li
       })
   );
 
-  const allDiscordIds = [...userDiscordIds, ...managersDiscordIds].filter((id) => id !== null);
+  const allDiscordIds = [...userDiscordIds, ...managersDiscordIds].filter((id) => id > 0);
 
   const thread = await getOrCreateThread({ issue: issueDB, price, assignees: allDiscordIds });
 
