@@ -20,4 +20,11 @@ router.get(
   dashboardController.leaderboardOrganization
 );
 
+router.get(
+  '/setIssueRewarded',
+  authenticateApiKey,
+  validate(dashboardValidation.setIssueRewarded),
+  dashboardController.setIssueRewarded
+);
+
 module.exports = router;
