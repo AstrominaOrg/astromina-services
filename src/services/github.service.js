@@ -724,6 +724,17 @@ const sendCommend = async (context, message) => {
   });
 }
 
+const sendCommendToIssue = async (owner, repo, issue_number, message) => {
+  await initializeOctokit(owner);
+
+  await octokitInstance.rest.issues.createComment({
+    owner,
+    repo,
+    issue_number,
+    body: message,
+  });
+}
+
 const overrideManager = async (username) => {
   await initializeOctokit();
 
@@ -810,6 +821,7 @@ module.exports = {
   getLinkedIssues,
   getRepository,
   sendCommend,
+  sendCommendToIssue,
   getInstallation,
   overrideManager,
   overrideAssignee,
