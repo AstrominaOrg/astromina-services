@@ -49,7 +49,16 @@ async function getIssueByIssueNumberAndRepositoryId(issueNumber, repositoryId) {
 }
 
 async function getIssueByOwnerAndRepoAndIssueNumber(owner, repo, issueNumber) {
-  const issue = await queryIssues({ 'owner.login': owner, 'repository.name': repo, number: issueNumber }, { limit: 1 });
+  const issue = await queryIssues(
+    {
+      // eslint-disable-next-line security/detect-non-literal-regexp
+      'owner.login': { $regex: new RegExp(owner, 'i') },
+      // eslint-disable-next-line security/detect-non-literal-regexp
+      'repository.name': { $regex: new RegExp(repo, 'i') },
+      number: issueNumber,
+    },
+    { limit: 1 }
+  );
 
   return issue.results[0];
 }
